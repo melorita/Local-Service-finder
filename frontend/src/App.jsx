@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminProfile from './pages/AdminProfile';
 import ProviderDashboard from './pages/ProviderDashboard';
 import ProviderProfile from './pages/ProviderProfile';
 
@@ -121,6 +122,15 @@ const Home = ({ providers, onSearch }) => {
                                 </div>
                             </div>
                         )}
+                        {providers.length > 0 && providers.filter(p => p.status === 'approved').length === 0 && (
+                            <div className="col-span-full py-20 text-center">
+                                <div className="inline-flex flex-col items-center gap-4 opacity-50 grayscale">
+                                    <Search size={48} />
+                                    <p className="font-black text-xl tracking-widest uppercase">No verified professionals found</p>
+                                    <button onClick={() => onSearch('', '')} className="text-blue-400 font-bold underline">Reset search</button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </section>
             </main>
@@ -168,7 +178,9 @@ const App = () => {
                         <p className="text-slate-400 font-bold uppercase tracking-widest">Access Denied</p>
                         <Link to="/" className="btn-secondary mt-4">Return Home</Link>
                     </div>} />
+                    <Route path="/admin/settings" element={user?.role === 'admin' ? <AdminProfile user={user} onUpdate={setUser} /> : <Link to="/login" />} />
                 </Routes>
+
             </div>
         </Router>
     );

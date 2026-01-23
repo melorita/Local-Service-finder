@@ -13,11 +13,16 @@ const Navbar = ({ user, onLogout }) => {
             </Link>
 
             <div className="flex gap-6 items-center">
-                <Link to="/" className="text-slate-400 hover:text-white transition-colors font-medium">Find Services</Link>
+                {user?.role !== 'admin' && (
+                    <Link to="/" className="text-slate-400 hover:text-white transition-colors font-medium">Find Services</Link>
+                )}
                 {user ? (
                     <div className="flex items-center gap-6">
                         {user.role === 'admin' && (
-                            <Link to="/admin" className="text-slate-400 hover:text-white transition-colors font-medium text-xs uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">Admin</Link>
+                            <div className="flex gap-2">
+                                <Link to="/admin" className="text-slate-400 hover:text-white transition-colors font-medium text-xs uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">Dashboard</Link>
+                                <Link to="/admin/settings" className="text-slate-400 hover:text-white transition-colors font-medium text-xs uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">Settings</Link>
+                            </div>
                         )}
                         {user.role === 'provider' && (
                             <Link to="/dashboard" className="text-slate-400 hover:text-white transition-colors font-medium text-xs uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">My Dashboard</Link>
