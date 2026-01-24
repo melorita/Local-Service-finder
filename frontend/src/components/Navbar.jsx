@@ -6,7 +6,7 @@ const Navbar = ({ user, onLogout }) => {
     return (
         <nav className="glass-panel mx-4 mt-4 px-6 py-4 flex justify-between items-center sticky top-4 z-50">
             <Link
-                to="/"
+                to={user?.role === 'admin' ? "/admin" : "/"}
                 className="text-2xl font-black bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent hover:opacity-80 transition-opacity"
             >
                 ServiceFinder

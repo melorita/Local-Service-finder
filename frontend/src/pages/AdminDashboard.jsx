@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Check, X, Shield, Users, Clock, AlertTriangle, UserCircle } from 'lucide-react';
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ onProviderApproved }) => {
     const [providers, setProviders] = useState([]);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -41,6 +41,7 @@ const AdminDashboard = () => {
             };
             await axios.patch(`/api/admin/providers/${id}/status`, { status }, config);
             fetchAllData();
+            if (onProviderApproved) onProviderApproved();
         } catch (err) {
             console.error(err);
         }

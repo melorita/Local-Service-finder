@@ -19,7 +19,13 @@ const Login = ({ onLoginSuccess }) => {
             localStorage.setItem('token', resp.data.token);
             localStorage.setItem('user', JSON.stringify(resp.data.user));
             onLoginSuccess(resp.data.user);
-            navigate('/');
+            if (resp.data.user.role === 'admin') {
+                navigate('/admin');
+            } else if (resp.data.user.role === 'provider') {
+                navigate('/dashboard');
+            } else {
+                navigate('/');
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
         } finally {
