@@ -162,15 +162,7 @@ const ProviderDashboard = ({ user }) => {
                         </div>
                     </div>
 
-                    <div className="glass-panel p-6 border-l-4 border-l-amber-500">
-                        <div className="flex gap-4">
-                            <AlertCircle className="text-amber-500 shrink-0" />
-                            <div>
-                                <h4 className="font-black text-sm uppercase tracking-widest mb-1">Attention</h4>
-                                <p className="text-xs text-slate-400 leading-relaxed font-medium">Your profile must be approved by an administrator before it appears in public search results.</p>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>

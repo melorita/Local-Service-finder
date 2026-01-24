@@ -171,7 +171,7 @@ const App = () => {
                     <Route path="/" element={user?.role === 'admin' ? <AdminDashboard onProviderApproved={fetchProviders} /> : <Home providers={providers} onSearch={fetchProviders} />} />
                     <Route path="/login" element={<Login onLoginSuccess={setUser} />} />
                     <Route path="/register" element={<Register />} />
-                    <Route path="/provider/:id" element={<ProviderProfile user={user} />} />
+                    <Route path="/provider/:id" element={<ProviderProfile user={user} onReviewSubmitted={fetchProviders} />} />
                     <Route path="/dashboard" element={user?.role === 'provider' ? <ProviderDashboard user={user} /> : <Link to="/login" />} />
                     <Route path="/admin" element={user?.role === 'admin' ? <AdminDashboard onProviderApproved={fetchProviders} /> : <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                         <div className="text-red-400 font-black text-4xl">403</div>

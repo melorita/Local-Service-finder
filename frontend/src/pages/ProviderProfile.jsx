@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Star, MapPin, Phone, Mail, User, Send, Clock, ShieldCheck } from 'lucide-react';
 
-const ProviderProfile = ({ user }) => {
+const ProviderProfile = ({ user, onReviewSubmitted }) => {
     const { id } = useParams();
     const [provider, setProvider] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -42,6 +42,7 @@ const ProviderProfile = ({ user }) => {
             setMessage('Review submitted successfully!');
             setReview({ rating: 5, comment: '' });
             fetchProvider(); // Refresh details and reviews
+            if (onReviewSubmitted) onReviewSubmitted();
         } catch (err) {
             setMessage(err.response?.data?.message || 'Failed to submit review');
         } finally {
