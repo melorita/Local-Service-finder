@@ -35,12 +35,27 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     try {
+        console.log('Login attempt for:', email);
         const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-        if (users.length === 0) return res.status(400).json({ message: 'User not found' });
+
+        if (users.length === 0) {
+            console.log('User not found in database');
+            return res.status(400).json({ message: 'User not found' });
+        }
 
         const user = users[0];
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+        console.log('Password match:', isMatch);
+
+        if (!isMatch) {
+            console.log('Invalid credentials for:', email);
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+
+        if (!process.env.JWT_SECRET) {
+            console.error('CRITICAL: JWT_SECRET is not defined in .env');
+            throw new Error('Server configuration error: JWT_SECRET is missing');
+        }
 
         const token = jwt.sign(
             { id: user.id, role: user.role },

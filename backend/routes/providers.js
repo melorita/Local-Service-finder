@@ -74,6 +74,10 @@ router.get('/', async (req, res) => {
         const [providers] = await db.query(query, params);
         res.json(providers);
     } catch (err) {
+        console.error('Database query error in GET /api/providers:');
+        console.error('Query:', query);
+        console.error('Params:', params);
+        console.error('Error:', err);
         res.status(500).json({ error: err.message });
     }
 });

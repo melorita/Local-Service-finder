@@ -154,8 +154,13 @@ const App = () => {
             setProviders(resp.data);
         } catch (err) {
             console.error('Error fetching providers:', err);
+            if (err.response) {
+                console.error('Error response data:', err.response.data);
+                console.error('Error response status:', err.response.status);
+            }
         }
     };
+
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -164,7 +169,7 @@ const App = () => {
     };
 
     return (
-        <Router>
+        <Router future={{ v7_relativeSplatPath: true }}>
             <div className="min-h-screen bg-[#0f172a] text-white selection:bg-blue-500/30">
                 <Navbar user={user} onLogout={handleLogout} />
                 <Routes>

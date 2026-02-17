@@ -16,6 +16,8 @@ const Login = ({ onLoginSuccess }) => {
         setError('');
         try {
             const resp = await axios.post('/api/auth/login', { email, password });
+            console.log('Login response:', resp.data);
+
             localStorage.setItem('token', resp.data.token);
             localStorage.setItem('user', JSON.stringify(resp.data.user));
             onLoginSuccess(resp.data.user);
@@ -27,7 +29,7 @@ const Login = ({ onLoginSuccess }) => {
                 navigate('/');
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed');
+            setError(err.response?.data?.message || err.response?.data?.error || 'Login failed');
         } finally {
             setLoading(false);
         }

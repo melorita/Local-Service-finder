@@ -2,6 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
+if (!process.env.JWT_SECRET) {
+    process.env.JWT_SECRET = 'temporary_default_secret_key_123';
+    console.warn('Warning: JWT_SECRET not found in .env, using temporary default.');
+}
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;

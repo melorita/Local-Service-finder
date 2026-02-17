@@ -8,7 +8,9 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME || 'local_service_finder',
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    connectTimeout: 5000, // 5 seconds
+    acquireTimeout: 5000  // 5 seconds
 });
 
 module.exports = pool.promise();
