@@ -35,3 +35,13 @@ CREATE TABLE IF NOT EXISTS reviews (
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS service_change_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    provider_id INT NOT NULL,
+    old_service VARCHAR(100),
+    requested_service VARCHAR(100),
+    status ENUM('PENDING', 'APPROVED', 'REJECTED') DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE
+);
+
