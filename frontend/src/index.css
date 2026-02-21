@@ -22,7 +22,7 @@
     }
 
     .input-field {
-        @apply bg-dark-lighter/50 border border-slate-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-500;
+        @apply bg-slate-800/50 border border-slate-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-500;
     }
 
     /* Custom glass search bar */

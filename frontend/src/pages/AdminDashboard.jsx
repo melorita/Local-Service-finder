@@ -5,7 +5,9 @@ import { Check, X, Shield, Users, Clock, AlertTriangle, UserCircle } from 'lucid
 const AdminDashboard = ({ onProviderApproved }) => {
     const [providers, setProviders] = useState([]);
     const [users, setUsers] = useState([]);
+    const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('providers');
 
     useEffect(() => {
@@ -14,21 +16,25 @@ const AdminDashboard = ({ onProviderApproved }) => {
 
     const fetchAllData = async () => {
         try {
+            setError(null);
             const token = localStorage.getItem('token');
             const config = {
                 headers: { Authorization: `Bearer ${token}` }
             };
 
-            const [providersResp, usersResp] = await Promise.all([
+            const [providersResp, usersResp, requestsResp] = await Promise.all([
                 axios.get('/api/admin/providers', config),
-                axios.get('/api/admin/users', config)
+                axios.get('/api/admin/users', config),
+                axios.get('/api/admin/service-change-requests', config)
             ]);
 
             setProviders(providersResp.data);
             setUsers(usersResp.data);
+            setRequests(requestsResp.data);
             setLoading(false);
         } catch (err) {
             console.error(err);
+            setError(err.response?.data?.error || err.message || 'Failed to fetch dashboard data');
             setLoading(false);
         }
     };
@@ -42,6 +48,19 @@ const AdminDashboard = ({ onProviderApproved }) => {
             await axios.patch(`/api/admin/providers/${id}/status`, { status }, config);
             fetchAllData();
             if (onProviderApproved) onProviderApproved();
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleRequestAction = async (requestId, status) => {
+        try {
+            const token = localStorage.getItem('token');
+            const config = {
+                headers: { Authorization: `Bearer ${token}` }
+            };
+            await axios.patch(`/api/admin/service-change-requests/${requestId}`, { status }, config);
+            fetchAllData();
         } catch (err) {
             console.error(err);
         }
@@ -74,8 +93,24 @@ const AdminDashboard = ({ onProviderApproved }) => {
                     >
                         ALL USERS
                     </button>
+                    <button
+                        onClick={() => setActiveTab('requests')}
+                        className={`px-6 py-2.5 rounded-lg text-sm font-black transition-all ${activeTab === 'requests' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-white'}`}
+                    >
+                        REQUESTS {requests.length > 0 && <span className="ml-2 bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full">{requests.length}</span>}
+                    </button>
                 </div>
             </header>
+
+            {error && (
+                <div className="mb-10 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 flex items-center gap-3">
+                    <AlertTriangle size={20} />
+                    <span className="font-bold">{error}</span>
+                    <button onClick={fetchAllData} className="ml-auto bg-red-500 text-white px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-600 transition-all">
+                        Retry
+                    </button>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                 <div className="glass-panel p-6 flex items-center gap-5 group hover:bg-white/[0.07] transition-colors border-l-4 border-l-blue-500">
@@ -142,11 +177,11 @@ const AdminDashboard = ({ onProviderApproved }) => {
                                         </td>
                                         <td className="px-6 py-6 text-center">
                                             <span className={`
-                        inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest
-                        ${p.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                                inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest
+                                                ${p.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                                                     p.status === 'blocked' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
                                                         'bg-amber-500/10 text-amber-400 border border-amber-500/20'}
-                      `}>
+                                            `}>
                                                 {p.status}
                                             </span>
                                         </td>
@@ -204,7 +239,7 @@ const AdminDashboard = ({ onProviderApproved }) => {
                             </tbody>
                         </table>
                     </div>
-                ) : (
+                ) : activeTab === 'users' ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
@@ -231,11 +266,11 @@ const AdminDashboard = ({ onProviderApproved }) => {
                                         </td>
                                         <td className="px-6 py-6">
                                             <span className={`
-                        px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border
-                        ${u.role === 'admin' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' :
+                                                px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border
+                                                ${u.role === 'admin' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' :
                                                     u.role === 'provider' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                                                         'bg-white/5 text-slate-400 border-white/10'}
-                      `}>
+                                            `}>
                                                 {u.role}
                                             </span>
                                         </td>
@@ -254,6 +289,61 @@ const AdminDashboard = ({ onProviderApproved }) => {
                             </tbody>
                         </table>
                     </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="bg-white/[0.02] border-b border-white/5 uppercase tracking-[0.2em] text-[10px] text-slate-500 font-black">
+                                    <th className="px-6 py-5">Provider Name</th>
+                                    <th className="px-6 py-5">Current → Requested</th>
+                                    <th className="px-6 py-5">Date Requested</th>
+                                    <th className="px-6 py-5 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {requests.length > 0 ? requests.map(r => (
+                                    <tr key={r.id} className="hover:bg-white/[0.01] transition-colors group">
+                                        <td className="px-6 py-6 font-bold text-white uppercase tracking-tight">
+                                            {r.provider_name}
+                                        </td>
+                                        <td className="px-6 py-6 italic text-slate-400 text-sm">
+                                            <span className="text-slate-500 line-through">{r.old_service}</span>
+                                            <span className="mx-2 text-blue-400 font-black">→</span>
+                                            <span className="text-emerald-400 font-black">{r.requested_service}</span>
+                                        </td>
+                                        <td className="px-6 py-6 text-slate-400 text-sm font-medium">
+                                            {new Date(r.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-6">
+                                            <div className="flex justify-end gap-3">
+                                                <button
+                                                    onClick={() => handleRequestAction(r.id, 'APPROVED')}
+                                                    className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRequestAction(r.id, 'REJECTED')}
+                                                    className="px-4 py-2 bg-red-500/10 text-red-500 rounded-xl text-xs font-black uppercase tracking-widest border border-red-500/20 hover:bg-red-500 hover:text-white transition-all"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="4" className="px-6 py-24 text-center">
+                                            <div className="flex flex-col items-center gap-4 opacity-30">
+                                                <Clock size={64} className="text-slate-500" />
+                                                <p className="font-black text-2xl uppercase tracking-[0.2em] text-slate-500">No pending requests</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
         </div>
@@ -261,4 +351,3 @@ const AdminDashboard = ({ onProviderApproved }) => {
 };
 
 export default AdminDashboard;
-

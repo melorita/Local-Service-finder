@@ -33,14 +33,15 @@ const ProviderDashboard = ({ user }) => {
         setMessage('');
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`/api/providers/me`, editData, {
+            const resp = await axios.put(`/api/providers/me`, editData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setProfile(editData);
+
+            setMessage(resp.data.message || 'Profile updated successfully!');
+            fetchProfile(); // Re-fetch to get potential pending status
             setIsEditing(false);
-            setMessage('Profile updated successfully!');
         } catch (err) {
-            setMessage('Failed to update profile.');
+            setMessage(err.response?.data?.message || 'Failed to update profile.');
         }
     };
 
@@ -91,6 +92,12 @@ const ProviderDashboard = ({ user }) => {
                                         onChange={(e) => setEditData({ ...editData, service_type: e.target.value })}
                                         className={`input-field w-full ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                                     />
+                                    {profile.pending_request && (
+                                        <div className="flex items-center gap-2 mt-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 text-xs font-bold">
+                                            <AlertCircle size={14} />
+                                            Pending change to: "{profile.pending_request.requested_service}"
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Location</label>

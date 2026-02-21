@@ -58,4 +58,51 @@ router.put('/profile', isAdmin, async (req, res) => {
     }
 });
 
+// --- Service Change Requests ---
+
+// Get all pending service change requests
+router.get('/service-change-requests', isAdmin, async (req, res) => {
+    try {
+        const [requests] = await db.query(`
+            SELECT scr.*, u.name as provider_name, p.user_id 
+            FROM service_change_requests scr
+            JOIN providers p ON scr.provider_id = p.id
+            JOIN users u ON p.user_id = u.id
+            WHERE scr.status = 'PENDING'
+        `);
+        res.json(requests);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Approve or Reject service change request
+router.patch('/service-change-requests/:id', isAdmin, async (req, res) => {
+    const { status } = req.body; // 'APPROVED' or 'REJECTED'
+    const requestId = req.params.id;
+
+    try {
+        // 1. Get the request details
+        const [requests] = await db.query('SELECT * FROM service_change_requests WHERE id = ?', [requestId]);
+        if (requests.length === 0) return res.status(404).json({ message: 'Request not found' });
+
+        const request = requests[0];
+
+        if (status === 'APPROVED') {
+            // Update provider's service type
+            await db.query('UPDATE providers SET service_type = ? WHERE id = ?', [request.requested_service, request.provider_id]);
+            // Update request status
+            await db.query('UPDATE service_change_requests SET status = ? WHERE id = ?', ['APPROVED', requestId]);
+            res.json({ message: 'Service change approved and updated' });
+        } else if (status === 'REJECTED') {
+            await db.query('UPDATE service_change_requests SET status = ? WHERE id = ?', ['REJECTED', requestId]);
+            res.json({ message: 'Service change rejected' });
+        } else {
+            res.status(400).json({ message: 'Invalid status' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
