@@ -27,6 +27,9 @@ const Navbar = ({ user, onLogout }) => {
                         {user.role === 'provider' && (
                             <Link to="/dashboard" className="text-slate-400 hover:text-white transition-colors font-medium text-xs uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">My Dashboard</Link>
                         )}
+                        {user.role === 'customer' && (
+                            <Link to="/customer-dashboard" className="text-slate-400 hover:text-white transition-colors font-medium text-xs uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">My Activity</Link>
+                        )}
                         <div className="flex items-center gap-4 border-l border-white/10 pl-6">
                             <div className="flex items-center gap-2 text-white">
                                 <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">

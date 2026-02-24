@@ -61,6 +61,7 @@ const AdminDashboard = ({ onProviderApproved }) => {
             };
             await axios.patch(`/api/admin/service-change-requests/${requestId}`, { status }, config);
             fetchAllData();
+            if (onProviderApproved) onProviderApproved();
         } catch (err) {
             console.error(err);
         }

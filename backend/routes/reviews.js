@@ -48,4 +48,22 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
+// Get reviews by customer
+router.get('/my-reviews', authenticateToken, async (req, res) => {
+    try {
+        const [reviews] = await db.query(
+            `SELECT r.*, p.service_type, u.name as provider_name 
+             FROM reviews r 
+             JOIN providers p ON r.provider_id = p.id 
+             JOIN users u ON p.user_id = u.id 
+             WHERE r.customer_id = ? 
+             ORDER BY r.created_at DESC`,
+            [req.user.id]
+        );
+        res.json(reviews);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

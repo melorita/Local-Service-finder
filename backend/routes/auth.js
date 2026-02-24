@@ -72,4 +72,27 @@ router.post('/login', async (req, res) => {
     }
 });
 
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.sendStatus(401);
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403);
+        req.user = user;
+        next();
+    });
+};
+
+router.put('/profile', authenticateToken, async (req, res) => {
+    const { name, email } = req.body;
+    try {
+        await db.query('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, req.user.id]);
+        res.json({ message: 'Profile updated successfully' });
+    } catch (err) {
+        console.error('Update profile error:', err);
+        res.status(500).json({ message: 'Error updating profile', error: err.message });
+    }
+});
+
 module.exports = router;

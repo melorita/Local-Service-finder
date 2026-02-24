@@ -1,7 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+const envPath = path.join(__dirname, 'config.env');
+if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath });
+} else {
+    require('dotenv').config();
+}
+
 if (!process.env.JWT_SECRET) {
     process.env.JWT_SECRET = 'temporary_default_secret_key_123';
     console.warn('Warning: JWT_SECRET not found in .env, using temporary default.');
@@ -10,6 +18,8 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+
 
 const authRoutes = require('./routes/auth');
 const providerRoutes = require('./routes/providers');
@@ -25,7 +35,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/reviews', reviewRoutes);
 
 app.get('/', (req, res) => {
-    res.send('Local Service Finder API is running...');
+    res.send('Local Service Finder API is running... (v2)');
+
 });
 
 app.listen(PORT, () => {
