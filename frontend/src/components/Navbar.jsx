@@ -6,19 +6,19 @@ const Navbar = ({ user, onLogout }) => {
     return (
         <nav className="glass-panel mx-4 mt-4 px-6 py-4 flex justify-between items-center sticky top-4 z-50">
             <Link
-                to={user?.role === 'admin' ? "/admin" : "/"}
+                to={(user?.role === 'admin' || user?.role === 'super_admin') ? "/admin" : "/"}
                 className="text-2xl font-black bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent hover:opacity-80 transition-opacity"
             >
                 ServiceFinder
             </Link>
 
             <div className="flex gap-6 items-center">
-                {user?.role !== 'admin' && (
+                {(user?.role !== 'admin' && user?.role !== 'super_admin') && (
                     <Link to="/" className="text-slate-400 hover:text-white transition-colors font-medium">Find Services</Link>
                 )}
                 {user ? (
                     <div className="flex items-center gap-6">
-                        {user.role === 'admin' && (
+                        {(user.role === 'admin' || user.role === 'super_admin') && (
                             <div className="flex gap-2">
                                 <Link to="/admin" className="text-slate-400 hover:text-white transition-colors font-medium text-xs uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">Dashboard</Link>
                                 <Link to="/admin/settings" className="text-slate-400 hover:text-white transition-colors font-medium text-xs uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">Settings</Link>

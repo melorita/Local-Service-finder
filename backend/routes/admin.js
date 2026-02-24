@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 // Middleware to check if user is admin
 const isAdmin = (req, res, next) => {
@@ -10,7 +11,19 @@ const isAdmin = (req, res, next) => {
     if (!token) return res.sendStatus(401);
 
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-        if (err || user.role !== 'admin') return res.sendStatus(403);
+        if (err || (user.role !== 'admin' && user.role !== 'super_admin')) return res.sendStatus(403);
+        req.user = user;
+        next();
+    });
+};
+
+const isSuperAdmin = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.sendStatus(401);
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err || user.role !== 'super_admin') return res.sendStatus(403);
         req.user = user;
         next();
     });
@@ -19,7 +32,19 @@ const isAdmin = (req, res, next) => {
 // Get all providers for approval
 router.get('/providers', isAdmin, async (req, res) => {
     try {
-        const [providers] = await db.query('SELECT p.*, u.name, u.email FROM providers p JOIN users u ON p.user_id = u.id');
+        let query = 'SELECT p.*, u.name, u.email FROM providers p JOIN users u ON p.user_id = u.id';
+        let params = [];
+
+        // Regional Control
+        if (req.user.role === 'admin') {
+            const [adminData] = await db.query('SELECT region FROM users WHERE id = ?', [req.user.id]);
+            if (adminData.length > 0 && adminData[0].region) {
+                query += ' WHERE p.location LIKE ?';
+                params.push(`%${adminData[0].region}%`);
+            }
+        }
+
+        const [providers] = await db.query(query, params);
         res.json(providers);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -40,6 +65,21 @@ router.get('/users', isAdmin, async (req, res) => {
 router.patch('/providers/:id/status', isAdmin, async (req, res) => {
     const { status } = req.body; // 'approved', 'blocked', 'pending'
     try {
+        // Regional Control
+        if (req.user.role === 'admin') {
+            const [adminData] = await db.query('SELECT region FROM users WHERE id = ?', [req.user.id]);
+            const [providerData] = await db.query('SELECT location FROM providers WHERE id = ?', [req.params.id]);
+
+            if (adminData.length > 0 && providerData.length > 0) {
+                const adminRegion = adminData[0].region;
+                const providerLocation = providerData[0].location;
+
+                if (adminRegion && !providerLocation.toLowerCase().includes(adminRegion.toLowerCase())) {
+                    return res.status(403).json({ message: 'Unauthorized: You can only manage providers in your region.' });
+                }
+            }
+        }
+
         await db.query('UPDATE providers SET status = ? WHERE id = ?', [status, req.params.id]);
         res.json({ message: 'Status updated successfully' });
     } catch (err) {
@@ -63,13 +103,25 @@ router.put('/profile', isAdmin, async (req, res) => {
 // Get all pending service change requests
 router.get('/service-change-requests', isAdmin, async (req, res) => {
     try {
-        const [requests] = await db.query(`
-            SELECT scr.*, u.name as provider_name, p.user_id 
+        let query = `
+            SELECT scr.*, u.name as provider_name, p.user_id, p.location
             FROM service_change_requests scr
             JOIN providers p ON scr.provider_id = p.id
             JOIN users u ON p.user_id = u.id
             WHERE scr.status = 'PENDING'
-        `);
+        `;
+        let params = [];
+
+        // Regional Control
+        if (req.user.role === 'admin') {
+            const [adminData] = await db.query('SELECT region FROM users WHERE id = ?', [req.user.id]);
+            if (adminData.length > 0 && adminData[0].region) {
+                query += ' AND p.location LIKE ?';
+                params.push(`%${adminData[0].region}%`);
+            }
+        }
+
+        const [requests] = await db.query(query, params);
         res.json(requests);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -83,10 +135,27 @@ router.patch('/service-change-requests/:id', isAdmin, async (req, res) => {
 
     try {
         // 1. Get the request details
-        const [requests] = await db.query('SELECT * FROM service_change_requests WHERE id = ?', [requestId]);
+        const [requests] = await db.query(`
+            SELECT scr.*, p.location 
+            FROM service_change_requests scr 
+            JOIN providers p ON scr.provider_id = p.id 
+            WHERE scr.id = ?
+        `, [requestId]);
+
         if (requests.length === 0) return res.status(404).json({ message: 'Request not found' });
 
         const request = requests[0];
+
+        // Regional Control
+        if (req.user.role === 'admin') {
+            const [adminData] = await db.query('SELECT region FROM users WHERE id = ?', [req.user.id]);
+            if (adminData.length > 0) {
+                const adminRegion = adminData[0].region;
+                if (adminRegion && !request.location.toLowerCase().includes(adminRegion.toLowerCase())) {
+                    return res.status(403).json({ message: 'Unauthorized: You can only manage requests in your region.' });
+                }
+            }
+        }
 
         if (status === 'APPROVED') {
             // Update provider's service type
@@ -100,6 +169,26 @@ router.patch('/service-change-requests/:id', isAdmin, async (req, res) => {
         } else {
             res.status(400).json({ message: 'Invalid status' });
         }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create new admin (Super Admin only)
+router.post('/create-admin', isSuperAdmin, async (req, res) => {
+    const { name, email, password, region } = req.body;
+
+    try {
+        const [existing] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (existing.length > 0) return res.status(400).json({ message: 'Email already in use' });
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await db.query(
+            'INSERT INTO users (name, email, password, role, region) VALUES (?, ?, ?, "admin", ?)',
+            [name, email, hashedPassword, region]
+        );
+
+        res.status(201).json({ message: 'Admin account created successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

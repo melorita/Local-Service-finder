@@ -2,13 +2,19 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Check, X, Shield, Users, Clock, AlertTriangle, UserCircle } from 'lucide-react';
 
-const AdminDashboard = ({ onProviderApproved }) => {
+const AdminDashboard = ({ user, onProviderApproved }) => {
     const [providers, setProviders] = useState([]);
     const [users, setUsers] = useState([]);
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('providers');
+    const [createAdminData, setCreateAdminData] = useState({ name: '', email: '', password: '', region: '' });
+    const [submittingAdmin, setSubmittingAdmin] = useState(false);
+    const [adminSuccessMsg, setAdminSuccessMsg] = useState('');
+    const [showCustomRegion, setShowCustomRegion] = useState(false);
+
+    const COMMON_REGIONS = ['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo'];
 
     useEffect(() => {
         fetchAllData();
@@ -67,6 +73,27 @@ const AdminDashboard = ({ onProviderApproved }) => {
         }
     };
 
+    const handleCreateAdmin = async (e) => {
+        e.preventDefault();
+        setSubmittingAdmin(true);
+        setError(null);
+        setAdminSuccessMsg('');
+        try {
+            const token = localStorage.getItem('token');
+            const config = {
+                headers: { Authorization: `Bearer ${token}` }
+            };
+            await axios.post('/api/admin/create-admin', createAdminData, config);
+            setAdminSuccessMsg('Admin account created successfully!');
+            setCreateAdminData({ name: '', email: '', password: '', region: '' });
+            fetchAllData(); // Refresh users list
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to create admin');
+        } finally {
+            setSubmittingAdmin(false);
+        }
+    };
+
     if (loading) return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
             <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
@@ -100,6 +127,14 @@ const AdminDashboard = ({ onProviderApproved }) => {
                     >
                         REQUESTS {requests.length > 0 && <span className="ml-2 bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full">{requests.length}</span>}
                     </button>
+                    {user?.role === 'super_admin' && (
+                        <button
+                            onClick={() => setActiveTab('admins')}
+                            className={`px-6 py-2.5 rounded-lg text-sm font-black transition-all ${activeTab === 'admins' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-white'}`}
+                        >
+                            CREATE ADMIN
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -290,7 +325,7 @@ const AdminDashboard = ({ onProviderApproved }) => {
                             </tbody>
                         </table>
                     </div>
-                ) : (
+                ) : activeTab === 'requests' ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
@@ -344,6 +379,93 @@ const AdminDashboard = ({ onProviderApproved }) => {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                ) : (
+                    <div className="p-8 max-w-2xl mx-auto">
+                        <h3 className="text-xl font-black mb-6 uppercase tracking-widest">Create New Administrative Account</h3>
+                        {adminSuccessMsg && (
+                            <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400 font-bold text-center">
+                                {adminSuccessMsg}
+                            </div>
+                        )}
+                        <form onSubmit={handleCreateAdmin} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
+                                    <input
+                                        required
+                                        className="input-field w-full"
+                                        placeholder="Enter name"
+                                        value={createAdminData.name}
+                                        onChange={(e) => setCreateAdminData({ ...createAdminData, name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+                                    <input
+                                        required
+                                        type="email"
+                                        className="input-field w-full"
+                                        placeholder="admin@example.com"
+                                        value={createAdminData.email}
+                                        onChange={(e) => setCreateAdminData({ ...createAdminData, email: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Password</label>
+                                    <input
+                                        required
+                                        type="password"
+                                        className="input-field w-full"
+                                        placeholder="••••••••"
+                                        value={createAdminData.password}
+                                        onChange={(e) => setCreateAdminData({ ...createAdminData, password: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned Region</label>
+                                    <select
+                                        className="input-field w-full bg-slate-900 border-white/10 text-white"
+                                        value={showCustomRegion ? 'other' : createAdminData.region}
+                                        onChange={(e) => {
+                                            if (e.target.value === 'other') {
+                                                setShowCustomRegion(true);
+                                                setCreateAdminData({ ...createAdminData, region: '' });
+                                            } else {
+                                                setShowCustomRegion(false);
+                                                setCreateAdminData({ ...createAdminData, region: e.target.value });
+                                            }
+                                        }}
+                                    >
+                                        <option value="">Select a region...</option>
+                                        {COMMON_REGIONS.map(reg => (
+                                            <option key={reg} value={reg}>{reg}</option>
+                                        ))}
+                                        <option value="other">Other (Type manually...)</option>
+                                    </select>
+                                </div>
+                                {showCustomRegion && (
+                                    <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">Enter Custom Region</label>
+                                        <input
+                                            required
+                                            className="input-field w-full border-blue-500/30"
+                                            placeholder="Type new region name..."
+                                            value={createAdminData.region}
+                                            onChange={(e) => setCreateAdminData({ ...createAdminData, region: e.target.value })}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={submittingAdmin}
+                                className="btn-primary w-full py-3 mt-4 flex items-center justify-center gap-2"
+                            >
+                                <Shield size={18} />
+                                {submittingAdmin ? 'Creating Account...' : 'Initialize Admin Access'}
+                            </button>
+                        </form>
                     </div>
                 )}
             </div>
