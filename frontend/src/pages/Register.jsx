@@ -16,7 +16,26 @@ const Register = () => {
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [regions, setRegions] = useState([]);
     const navigate = useNavigate();
+
+    React.useEffect(() => {
+        const fetchRegions = async () => {
+            try {
+                const { data } = await axios.get('/api/auth/regions');
+                if (data && data.length > 0) {
+                    setRegions(data);
+                } else {
+                    setRegions(['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
+                }
+            } catch (err) {
+                console.error('Error fetching regions:', err);
+                // Fallback regions just in case
+                setRegions(['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
+            }
+        };
+        fetchRegions();
+    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -69,13 +88,29 @@ const Register = () => {
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm font-semibold text-slate-400 ml-1">Password</label>
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                                <input name="password" type="password" className="input-field w-full pl-11" placeholder="••••••••" onChange={handleChange} required />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold text-slate-400 ml-1">Password</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                                    <input name="password" type="password" className="input-field w-full pl-11" placeholder="••••••••" onChange={handleChange} required />
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold text-slate-400 ml-1">Region</label>
+                                <div className="relative">
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                                    <select name="region" className="input-field w-full pl-11 bg-slate-900 border-white/10" onChange={handleChange} required>
+                                        <option value="">Select your region...</option>
+                                        {regions.map((r, i) => (
+                                            <option key={i} value={r}>{r}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                         </div>
+
+
 
                         <div className="flex flex-col gap-2">
                             <label className="text-sm font-semibold text-slate-400 ml-1">I am a...</label>
@@ -101,20 +136,11 @@ const Register = () => {
 
                         {formData.role === 'provider' && (
                             <div className="flex flex-col gap-6 pt-4 border-t border-white/5 mt-2 animate-in fade-in slide-in-from-top-4 duration-500">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-sm font-semibold text-slate-400 ml-1">Service Type</label>
-                                        <div className="relative">
-                                            <Wrench className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                                            <input name="service_type" className="input-field w-full pl-11" placeholder="e.g. Plumber" onChange={handleChange} required />
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-sm font-semibold text-slate-400 ml-1">Location</label>
-                                        <div className="relative">
-                                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                                            <input name="location" className="input-field w-full pl-11" placeholder="e.g. New York" onChange={handleChange} required />
-                                        </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-semibold text-slate-400 ml-1">Service Type</label>
+                                    <div className="relative">
+                                        <Wrench className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                                        <input name="service_type" className="input-field w-full pl-11" placeholder="e.g. Plumber" onChange={handleChange} required />
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2">

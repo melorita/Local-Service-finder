@@ -1,6 +1,12 @@
 CREATE DATABASE IF NOT EXISTS local_service_finder;
 USE local_service_finder;
 
+-- Regions table
+CREATE TABLE IF NOT EXISTS regions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL
+);
+
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,

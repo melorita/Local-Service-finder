@@ -34,14 +34,24 @@ router.get('/providers', isAdmin, async (req, res) => {
     try {
         let query = 'SELECT p.*, u.name, u.email FROM providers p JOIN users u ON p.user_id = u.id';
         let params = [];
+        let conditions = [];
 
         // Regional Control
         if (req.user.role === 'admin') {
             const [adminData] = await db.query('SELECT region FROM users WHERE id = ?', [req.user.id]);
             if (adminData.length > 0 && adminData[0].region) {
-                query += ' WHERE p.location LIKE ?';
+                conditions.push('p.location LIKE ?');
                 params.push(`%${adminData[0].region}%`);
+            } else {
+                conditions.push('p.id = -1');
             }
+        } else if (req.user.role === 'super_admin' && req.query.region) {
+            conditions.push('p.location LIKE ?');
+            params.push(`%${req.query.region}%`);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
         }
 
         const [providers] = await db.query(query, params);
@@ -54,7 +64,35 @@ router.get('/providers', isAdmin, async (req, res) => {
 // Get all users
 router.get('/users', isAdmin, async (req, res) => {
     try {
-        const [users] = await db.query('SELECT id, name, email, role, created_at FROM users');
+        let query = 'SELECT id, name, email, role, region, created_at FROM users';
+        let params = [];
+        let conditions = [];
+
+        if (req.user.role === 'admin') {
+            const [adminData] = await db.query('SELECT region FROM users WHERE id = ?', [req.user.id]);
+            if (adminData.length > 0 && adminData[0].region) {
+                conditions.push('region = ?');
+                params.push(adminData[0].region);
+                conditions.push('role IN ("customer", "provider")');
+            } else {
+                conditions.push('id = -1');
+            }
+        } else if (req.user.role === 'super_admin') {
+            if (req.query.region) {
+                conditions.push('region = ?');
+                params.push(req.query.region);
+            }
+            if (req.query.role) {
+                conditions.push('role = ?');
+                params.push(req.query.role);
+            }
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        const [users] = await db.query(query, params);
         res.json(users);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -118,7 +156,12 @@ router.get('/service-change-requests', isAdmin, async (req, res) => {
             if (adminData.length > 0 && adminData[0].region) {
                 query += ' AND p.location LIKE ?';
                 params.push(`%${adminData[0].region}%`);
+            } else {
+                query += ' AND p.id = -1';
             }
+        } else if (req.user.role === 'super_admin' && req.query.region) {
+            query += ' AND p.location LIKE ?';
+            params.push(`%${req.query.region}%`);
         }
 
         const [requests] = await db.query(query, params);
@@ -187,6 +230,9 @@ router.post('/create-admin', isSuperAdmin, async (req, res) => {
             'INSERT INTO users (name, email, password, role, region) VALUES (?, ?, ?, "admin", ?)',
             [name, email, hashedPassword, region]
         );
+        if (region) {
+            await db.query('INSERT IGNORE INTO regions (name) VALUES (?)', [region]);
+        }
 
         res.status(201).json({ message: 'Admin account created successfully' });
     } catch (err) {

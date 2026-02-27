@@ -13,12 +13,32 @@ const AdminDashboard = ({ user, onProviderApproved }) => {
     const [submittingAdmin, setSubmittingAdmin] = useState(false);
     const [adminSuccessMsg, setAdminSuccessMsg] = useState('');
     const [showCustomRegion, setShowCustomRegion] = useState(false);
+    const [filterRegion, setFilterRegion] = useState('');
+    const [filterRole, setFilterRole] = useState('');
+    const [regions, setRegions] = useState([]);
 
     const COMMON_REGIONS = ['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo'];
 
     useEffect(() => {
-        fetchAllData();
+        const fetchRegions = async () => {
+            try {
+                const { data } = await axios.get('/api/auth/regions');
+                if (data && data.length > 0) {
+                    setRegions(data);
+                } else {
+                    setRegions(COMMON_REGIONS);
+                }
+            } catch (err) {
+                console.error(err);
+                setRegions(COMMON_REGIONS);
+            }
+        };
+        fetchRegions();
     }, []);
+
+    useEffect(() => {
+        fetchAllData();
+    }, [filterRegion, filterRole]);
 
     const fetchAllData = async () => {
         try {
@@ -29,9 +49,9 @@ const AdminDashboard = ({ user, onProviderApproved }) => {
             };
 
             const [providersResp, usersResp, requestsResp] = await Promise.all([
-                axios.get('/api/admin/providers', config),
-                axios.get('/api/admin/users', config),
-                axios.get('/api/admin/service-change-requests', config)
+                axios.get(`/api/admin/providers?region=${filterRegion}`, config),
+                axios.get(`/api/admin/users?region=${filterRegion}&role=${filterRole}`, config),
+                axios.get(`/api/admin/service-change-requests?region=${filterRegion}`, config)
             ]);
 
             setProviders(providersResp.data);
@@ -181,6 +201,32 @@ const AdminDashboard = ({ user, onProviderApproved }) => {
             </div>
 
             <div className="glass-panel overflow-hidden border-white/5 shadow-2xl">
+                {user?.role === 'super_admin' && activeTab !== 'admins' && (
+                    <div className="p-4 border-b border-white/5 bg-white/[0.02] flex flex-wrap gap-4 items-center">
+                        <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Filters:</span>
+                        <select
+                            value={filterRegion}
+                            onChange={(e) => setFilterRegion(e.target.value)}
+                            className="bg-slate-900 border border-white/10 text-white rounded-lg px-3 py-1.5 text-sm outline-none w-40"
+                        >
+                            <option value="">All Regions</option>
+                            {regions.map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                        {activeTab === 'users' && (
+                            <select
+                                value={filterRole}
+                                onChange={(e) => setFilterRole(e.target.value)}
+                                className="bg-slate-900 border border-white/10 text-white rounded-lg px-3 py-1.5 text-sm outline-none w-40"
+                            >
+                                <option value="">All Roles</option>
+                                <option value="customer">Customer</option>
+                                <option value="provider">Provider</option>
+                                <option value="admin">Admin</option>
+                                <option value="super_admin">Super Admin</option>
+                            </select>
+                        )}
+                    </div>
+                )}
                 {activeTab === 'providers' ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
@@ -438,7 +484,7 @@ const AdminDashboard = ({ user, onProviderApproved }) => {
                                         }}
                                     >
                                         <option value="">Select a region...</option>
-                                        {COMMON_REGIONS.map(reg => (
+                                        {regions.map(reg => (
                                             <option key={reg} value={reg}>{reg}</option>
                                         ))}
                                         <option value="other">Other (Type manually...)</option>
