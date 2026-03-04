@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Check, X, Shield, Users, Clock, AlertTriangle, UserCircle } from 'lucide-react';
 
-const AdminDashboard = ({ user, onProviderApproved }) => {
+const SuperAdminDashboard = ({ user, onProviderApproved }) => {
     const [providers, setProviders] = useState([]);
     const [users, setUsers] = useState([]);
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('providers');
-
+    const [createAdminData, setCreateAdminData] = useState({ name: '', email: '', password: '', region: '' });
+    const [submittingAdmin, setSubmittingAdmin] = useState(false);
+    const [adminSuccessMsg, setAdminSuccessMsg] = useState('');
+    const [showCustomRegion, setShowCustomRegion] = useState(false);
     const [filterRegion, setFilterRegion] = useState('');
     const [filterRole, setFilterRole] = useState('');
     const [regions, setRegions] = useState([]);
@@ -90,7 +93,27 @@ const AdminDashboard = ({ user, onProviderApproved }) => {
         }
     };
 
-
+    const handleCreateAdmin = async (e) => {
+        e.preventDefault();
+        setSubmittingAdmin(true);
+        setError(null);
+        setAdminSuccessMsg('');
+        try {
+            const token = localStorage.getItem('token');
+            const config = {
+                headers: { Authorization: `Bearer ${token}` }
+            };
+            await axios.post('/api/admin/create-admin', createAdminData, config);
+            setAdminSuccessMsg('Admin account created successfully!');
+            setCreateAdminData({ name: '', email: '', password: '', region: '' });
+            setShowCustomRegion(false);
+            fetchAllData(); // Refresh users list
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to create admin');
+        } finally {
+            setSubmittingAdmin(false);
+        }
+    };
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -125,7 +148,12 @@ const AdminDashboard = ({ user, onProviderApproved }) => {
                     >
                         REQUESTS {requests.length > 0 && <span className="ml-2 bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full">{requests.length}</span>}
                     </button>
-
+                    <button
+                        onClick={() => setActiveTab('admins')}
+                        className={`px-6 py-2.5 rounded-lg text-sm font-black transition-all ${activeTab === 'admins' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-white'}`}
+                    >
+                        CREATE ADMIN
+                    </button>
                 </div>
             </header>
 
@@ -172,7 +200,32 @@ const AdminDashboard = ({ user, onProviderApproved }) => {
             </div>
 
             <div className="glass-panel overflow-hidden border-white/5 shadow-2xl">
-
+                {activeTab !== 'admins' && (
+                    <div className="p-4 border-b border-white/5 bg-white/[0.02] flex flex-wrap gap-4 items-center">
+                        <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Filters:</span>
+                        <select
+                            value={filterRegion}
+                            onChange={(e) => setFilterRegion(e.target.value)}
+                            className="bg-slate-900 border border-white/10 text-white rounded-lg px-3 py-1.5 text-sm outline-none w-40"
+                        >
+                            <option value="">All Regions</option>
+                            {regions.map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                        {activeTab === 'users' && (
+                            <select
+                                value={filterRole}
+                                onChange={(e) => setFilterRole(e.target.value)}
+                                className="bg-slate-900 border border-white/10 text-white rounded-lg px-3 py-1.5 text-sm outline-none w-40"
+                            >
+                                <option value="">All Roles</option>
+                                <option value="customer">Customer</option>
+                                <option value="provider">Provider</option>
+                                <option value="admin">Admin</option>
+                                <option value="super_admin">Super Admin</option>
+                            </select>
+                        )}
+                    </div>
+                )}
                 {activeTab === 'providers' ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
@@ -372,10 +425,108 @@ const AdminDashboard = ({ user, onProviderApproved }) => {
                             </tbody>
                         </table>
                     </div>
-                ) : null}
+                ) : (
+                    <div className="p-8 max-w-2xl mx-auto">
+                        <h3 className="text-xl font-black mb-6 uppercase tracking-widest">Create New Administrative Account</h3>
+                        {adminSuccessMsg && (
+                            <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400 font-bold text-center">
+                                {adminSuccessMsg}
+                            </div>
+                        )}
+                        <form onSubmit={handleCreateAdmin} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
+                                    <input
+                                        required
+                                        className="input-field w-full"
+                                        placeholder="Enter name"
+                                        value={createAdminData.name}
+                                        onChange={(e) => setCreateAdminData({ ...createAdminData, name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+                                    <input
+                                        required
+                                        type="email"
+                                        className="input-field w-full"
+                                        placeholder="admin@example.com"
+                                        value={createAdminData.email}
+                                        onChange={(e) => setCreateAdminData({ ...createAdminData, email: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Password</label>
+                                    <input
+                                        required
+                                        type="password"
+                                        className="input-field w-full"
+                                        placeholder="••••••••"
+                                        value={createAdminData.password}
+                                        onChange={(e) => setCreateAdminData({ ...createAdminData, password: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned Region</label>
+                                    {showCustomRegion ? (
+                                        <div className="relative animate-in fade-in zoom-in-95 duration-200">
+                                            <input
+                                                required
+                                                autoFocus
+                                                className="input-field w-full border-blue-500/50 pr-10 focus:ring-blue-500/50"
+                                                placeholder="Type new region name..."
+                                                value={createAdminData.region}
+                                                onChange={(e) => setCreateAdminData({ ...createAdminData, region: e.target.value })}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowCustomRegion(false);
+                                                    setCreateAdminData({ ...createAdminData, region: '' });
+                                                }}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 p-1 rounded-full transition-colors"
+                                                title="Cancel custom region"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <select
+                                            className="input-field w-full bg-slate-900 border-white/10 text-white"
+                                            value={createAdminData.region}
+                                            onChange={(e) => {
+                                                if (e.target.value === 'other') {
+                                                    setShowCustomRegion(true);
+                                                    setCreateAdminData({ ...createAdminData, region: '' });
+                                                } else {
+                                                    setCreateAdminData({ ...createAdminData, region: e.target.value });
+                                                }
+                                            }}
+                                        >
+                                            <option value="">Select a region...</option>
+                                            {regions.map(reg => (
+                                                <option key={reg} value={reg}>{reg}</option>
+                                            ))}
+                                            <option value="other">Other (Type manually...)</option>
+                                        </select>
+                                    )}
+                                </div>
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={submittingAdmin}
+                                className="btn-primary w-full py-3 mt-4 flex items-center justify-center gap-2"
+                            >
+                                <Shield size={18} />
+                                {submittingAdmin ? 'Creating Account...' : 'Initialize Admin Access'}
+                            </button>
+                        </form>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
-export default AdminDashboard;
+export default SuperAdminDashboard;
