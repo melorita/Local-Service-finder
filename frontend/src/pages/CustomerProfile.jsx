@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { User, Mail, Save, AlertCircle, Shield, ShoppingBag } from 'lucide-react';
+import { User, Mail, Save, AlertCircle, Shield, ShoppingBag, Key, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const CustomerProfile = ({ user, onUpdate }) => {
     const [name, setName] = useState(user?.name || '');
@@ -31,6 +32,8 @@ const CustomerProfile = ({ user, onUpdate }) => {
             setLoading(false);
         }
     };
+
+
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-12">
@@ -107,10 +110,17 @@ const CustomerProfile = ({ user, onUpdate }) => {
                         </div>
                     </div>
 
-                    <div className="glass-panel p-6 flex flex-col items-center gap-3 text-center">
-                        <Shield className="text-slate-500" size={32} />
-                        <h4 className="font-black text-xs uppercase tracking-widest text-slate-300">Privacy & Security</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed">Your data is encrypted and never shared with third-party providers without your consent.</p>
+                    <div className="glass-panel p-6 space-y-4">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Key className="text-blue-500" size={20} />
+                            <h4 className="font-black text-sm uppercase tracking-widest text-white">Password Security</h4>
+                        </div>
+                        <p className="text-xs text-slate-400 font-medium">To keep your account secure, change your password frequently.</p>
+
+                        <Link to="/customer/settings/password" className="w-full flex items-center justify-between bg-slate-800 hover:bg-slate-700 text-white border border-white/10 rounded-xl py-3 px-4 transition-all group mt-2 shadow-inner">
+                            <span className="text-xs font-black uppercase tracking-widest">Change Password</span>
+                            <ArrowRight size={16} className="text-slate-500 group-hover:text-blue-400 transition-colors" />
+                        </Link>
                     </div>
 
                     <div className="flex gap-4 items-start p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10">

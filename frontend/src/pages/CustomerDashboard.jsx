@@ -149,15 +149,6 @@ const CustomerDashboard = ({ user }) => {
                             <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
                         </Link>
 
-                        <Link to="/account-security" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all group">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-slate-800 p-2 rounded-lg text-slate-400">
-                                    <Settings size={20} />
-                                </div>
-                                <span className="font-bold">Security</span>
-                            </div>
-                            <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
-                        </Link>
 
                         <div className="h-[1px] bg-white/5 my-2"></div>
 

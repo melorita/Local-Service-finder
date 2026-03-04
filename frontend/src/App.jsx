@@ -14,6 +14,7 @@ import ProviderDashboard from './pages/ProviderDashboard';
 import ProviderProfile from './pages/ProviderProfile';
 import CustomerDashboard from './pages/CustomerDashboard';
 import CustomerProfile from './pages/CustomerProfile';
+import CustomerChangePassword from './pages/CustomerChangePassword';
 
 const App = () => {
     const [user, setUser] = useState(null);
@@ -64,6 +65,7 @@ const App = () => {
                     <Route path="/admin/settings/password" element={(user?.role === 'admin' || user?.role === 'super_admin') ? <AdminChangePassword user={user} /> : <Link to="/login" />} />
                     <Route path="/customer-dashboard" element={user?.role === 'customer' ? <CustomerDashboard user={user} /> : <Link to="/login" />} />
                     <Route path="/customer/settings" element={user?.role === 'customer' ? <CustomerProfile user={user} onUpdate={setUser} /> : <Link to="/login" />} />
+                    <Route path="/customer/settings/password" element={user?.role === 'customer' ? <CustomerChangePassword user={user} /> : <Link to="/login" />} />
                 </Routes>
 
             </div>

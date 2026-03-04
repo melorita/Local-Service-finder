@@ -105,4 +105,25 @@ router.put('/profile', authenticateToken, async (req, res) => {
     }
 });
 
+router.put('/change-password', authenticateToken, async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    try {
+        const [users] = await db.query('SELECT password FROM users WHERE id = ?', [req.user.id]);
+        if (users.length === 0) return res.status(404).json({ message: 'User not found' });
+
+        const isMatch = await bcrypt.compare(currentPassword, users[0].password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Incorrect current password' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, req.user.id]);
+
+        res.json({ message: 'Password updated successfully' });
+    } catch (err) {
+        console.error('Error changing password:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
