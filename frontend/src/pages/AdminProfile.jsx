@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { User, Mail, Shield, Save, Key, AlertCircle } from 'lucide-react';
+import { User, Mail, Shield, Save, Key, AlertCircle, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const AdminProfile = ({ user, onUpdate }) => {
     const [name, setName] = useState(user?.name || '');
@@ -30,6 +31,8 @@ const AdminProfile = ({ user, onUpdate }) => {
             setLoading(false);
         }
     };
+
+
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -84,6 +87,7 @@ const AdminProfile = ({ user, onUpdate }) => {
                                 </div>
                             </div>
 
+
                             <button
                                 type="submit"
                                 disabled={loading}
@@ -101,18 +105,22 @@ const AdminProfile = ({ user, onUpdate }) => {
                             <Shield className="text-violet-400 shrink-0" size={24} />
                             <div>
                                 <h4 className="font-black text-sm uppercase tracking-widest mb-1 text-white">System Role</h4>
-                                <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter">Super Administrator</p>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter">{user?.role === 'super_admin' ? 'Super Administrator' : 'Administrator'}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="glass-panel p-6 text-center space-y-4">
-                        <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
-                            <Key size={24} />
+                    <div className="glass-panel p-6 space-y-4">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Key className="text-blue-500" size={20} />
+                            <h4 className="font-black text-sm uppercase tracking-widest text-white">Password Security</h4>
                         </div>
-                        <h4 className="font-black text-xs uppercase tracking-widest text-slate-300">Password Security</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed">To change your password, please contact the system owner or use the recovery portal.</p>
-                        <button className="text-[10px] font-black uppercase text-blue-400 hover:text-blue-300 transition-colors tracking-widest">Request Reset</button>
+                        <p className="text-xs text-slate-400 font-medium">To keep your account secure, change your password frequently.</p>
+
+                        <Link to="/admin/settings/password" className="w-full flex items-center justify-between bg-slate-800 hover:bg-slate-700 text-white border border-white/10 rounded-xl py-3 px-4 transition-all group mt-2 shadow-inner">
+                            <span className="text-xs font-black uppercase tracking-widest">Change Password</span>
+                            <ArrowRight size={16} className="text-slate-500 group-hover:text-blue-400 transition-colors" />
+                        </Link>
                     </div>
 
                     <div className="flex gap-4 items-start p-4 bg-red-500/5 rounded-2xl border border-red-500/10">

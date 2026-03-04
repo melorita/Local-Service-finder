@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminProfile from './pages/AdminProfile';
+import AdminChangePassword from './pages/AdminChangePassword';
 import ProviderDashboard from './pages/ProviderDashboard';
 import ProviderProfile from './pages/ProviderProfile';
 import CustomerDashboard from './pages/CustomerDashboard';
@@ -60,6 +61,7 @@ const App = () => {
                         <Link to="/" className="btn-secondary mt-4">Return Home</Link>
                     </div>} />
                     <Route path="/admin/settings" element={(user?.role === 'admin' || user?.role === 'super_admin') ? <AdminProfile user={user} onUpdate={setUser} /> : <Link to="/login" />} />
+                    <Route path="/admin/settings/password" element={(user?.role === 'admin' || user?.role === 'super_admin') ? <AdminChangePassword user={user} /> : <Link to="/login" />} />
                     <Route path="/customer-dashboard" element={user?.role === 'customer' ? <CustomerDashboard user={user} /> : <Link to="/login" />} />
                     <Route path="/customer/settings" element={user?.role === 'customer' ? <CustomerProfile user={user} onUpdate={setUser} /> : <Link to="/login" />} />
                 </Routes>
