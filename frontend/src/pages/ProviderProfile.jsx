@@ -50,6 +50,31 @@ const ProviderProfile = ({ user, onReviewSubmitted }) => {
         }
     };
 
+    const handleContact = async () => {
+        if (!user) {
+            setMessage('Please login to contact this professional');
+            return;
+        }
+        if (user.role !== 'customer') {
+            setMessage('Only customers can send service requests.');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post('/api/requests',
+                { provider_id: id, message: `Hello ${provider.name}, I am interested in your ${provider.service_type} services.` },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            setMessage('Contact request sent! The professional will be notified.');
+        } catch (err) {
+            setMessage(err.response?.data?.message || 'Failed to send contact request.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     if (loading) return <div className="flex justify-center p-20"><div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div></div>;
     if (!provider) return <div className="text-center p-20 text-slate-400">Provider not found</div>;
 
@@ -73,6 +98,11 @@ const ProviderProfile = ({ user, onReviewSubmitted }) => {
                         </div>
 
                         <div className="space-y-4 pt-6 border-t border-white/5">
+                            {message && (
+                                <div className={`p-4 rounded-xl text-xs font-bold text-center mb-4 ${message.includes('successfully') || message.includes('sent') ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                    {message}
+                                </div>
+                            )}
                             <div className="flex items-center gap-4 text-slate-400">
                                 <div className="p-2 bg-white/5 rounded-lg"><MapPin size={18} /></div>
                                 <span className="text-sm font-medium">{provider.location}</span>
@@ -91,7 +121,13 @@ const ProviderProfile = ({ user, onReviewSubmitted }) => {
                             </div>
                         </div>
 
-                        <button className="btn-primary w-full mt-8 py-4 uppercase tracking-widest text-sm">Contact Business</button>
+                        <button
+                            onClick={handleContact}
+                            disabled={submitting}
+                            className="btn-primary w-full mt-8 py-4 uppercase tracking-widest text-sm disabled:opacity-50"
+                        >
+                            {submitting ? 'Sending...' : 'Contact Business'}
+                        </button>
                     </div>
                 </div>
 
@@ -112,7 +148,7 @@ const ProviderProfile = ({ user, onReviewSubmitted }) => {
                         <div className="glass-panel p-8 overflow-hidden relative">
                             <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full"></div>
                             <h3 className="text-xl font-black mb-6 relative">Rate this Service</h3>
-                            {message && <div className={`p-4 rounded-xl mb-6 text-sm font-bold text-center ${message.includes('successfully') ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>{message}</div>}
+                            {message && <div className={`p-4 rounded-xl mb-6 text-sm font-bold text-center ${message.includes('successfully') || message.includes('sent') ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>{message}</div>}
 
                             <form onSubmit={handleReviewSubmit} className="space-y-6 relative">
                                 <div className="flex flex-col gap-2">

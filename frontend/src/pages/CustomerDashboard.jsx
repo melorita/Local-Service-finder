@@ -5,6 +5,7 @@ import axios from 'axios';
 
 const CustomerDashboard = ({ user }) => {
     const [reviews, setReviews] = useState([]);
+    const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -22,11 +23,27 @@ const CustomerDashboard = ({ user }) => {
             }
         };
 
-        if (user) fetchMyReviews();
+        const fetchMyRequests = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const resp = await axios.get('/api/requests/customer', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setRequests(resp.data);
+            } catch (err) {
+                console.error('Error fetching requests:', err);
+            }
+        };
+
+        if (user) {
+            fetchMyReviews();
+            fetchMyRequests();
+        }
     }, [user]);
 
     const stats = [
         { label: 'Total Reviews', value: reviews.length, icon: MessageSquare, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+        { label: 'Sent Enquiries', value: requests.length, icon: Calendar, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
         { label: 'Avg Rating Given', value: reviews.length > 0 ? (reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length).toFixed(1) : '0.0', icon: Star, color: 'text-amber-400', bg: 'bg-amber-400/10' },
     ];
 
@@ -133,6 +150,43 @@ const CustomerDashboard = ({ user }) => {
                             </Link>
                         </div>
                     )}
+
+                    {/* Sent Enquiries Section */}
+                    <div className="mt-12 space-y-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <h2 className="text-xl font-black uppercase tracking-wider flex items-center gap-2">
+                                <Calendar className="text-emerald-400" size={20} />
+                                Sent Enquiries
+                            </h2>
+                        </div>
+
+                        {requests.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {requests.map((req) => (
+                                    <div key={req.id} className="glass-panel p-6 border-l-4 border-l-emerald-500">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <div className="font-black text-white">{req.provider_name}</div>
+                                                <div className="text-blue-400/80 text-[10px] font-black uppercase tracking-widest">{req.service_type}</div>
+                                            </div>
+                                            <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${req.status === 'pending' ? 'bg-amber-500/10 text-amber-500' :
+                                                    req.status === 'accepted' ? 'bg-emerald-500/10 text-emerald-400' :
+                                                        'bg-slate-500/10 text-slate-400'
+                                                }`}>
+                                                {req.status}
+                                            </div>
+                                        </div>
+                                        <p className="text-slate-400 text-sm italic mb-3">"{req.message}"</p>
+                                        <div className="text-[10px] text-slate-500 font-bold">{new Date(req.created_at).toLocaleString()}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="glass-panel p-8 text-center text-slate-500 italic text-sm">
+                                No enquiries sent yet.
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Sidebar Quick Actions */}

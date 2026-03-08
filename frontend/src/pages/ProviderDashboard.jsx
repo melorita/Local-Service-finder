@@ -8,9 +8,11 @@ const ProviderDashboard = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [editData, setEditData] = useState({});
     const [message, setMessage] = useState('');
+    const [requests, setRequests] = useState([]);
 
     useEffect(() => {
         fetchProfile();
+        fetchRequests();
     }, []);
 
     const fetchProfile = async () => {
@@ -25,6 +27,30 @@ const ProviderDashboard = ({ user }) => {
         } catch (err) {
             console.error(err);
             setLoading(false);
+        }
+    };
+
+    const fetchRequests = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const resp = await axios.get(`/api/requests/provider`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setRequests(resp.data);
+        } catch (err) {
+            console.error('Failed to fetch requests:', err);
+        }
+    };
+
+    const handleStatusUpdate = async (requestId, newStatus) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.patch(`/api/requests/${requestId}/status`, { status: newStatus }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchRequests(); // Refresh list
+        } catch (err) {
+            console.error('Failed to update request status:', err);
         }
     };
 
@@ -162,10 +188,49 @@ const ProviderDashboard = ({ user }) => {
                             <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500"><Clock /></div>
-                                    <span className="font-bold text-slate-400">Total Reviews</span>
+                                    <span className="font-bold text-slate-400">Contact Requests</span>
                                 </div>
-                                <span className="text-2xl font-black">{profile.reviews?.length || 0}</span>
+                                <span className="text-2xl font-black">{requests.length}</span>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="glass-panel p-8">
+                        <h3 className="text-xl font-black mb-8 uppercase tracking-widest">Recent Enquiries</h3>
+                        <div className="space-y-4">
+                            {requests.length > 0 ? requests.map(req => (
+                                <div key={req.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <div className="font-black text-white">{req.customer_name}</div>
+                                            <div className="text-xs text-slate-500">{new Date(req.created_at).toLocaleDateString()}</div>
+                                        </div>
+                                        <div className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${req.status === 'pending' ? 'bg-amber-500/10 text-amber-500' :
+                                                req.status === 'accepted' ? 'bg-emerald-500/10 text-emerald-400' :
+                                                    'bg-slate-500/10 text-slate-400'
+                                            }`}>
+                                            {req.status}
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-slate-400 italic">"{req.message}"</p>
+                                    <div className="flex gap-2 pt-2">
+                                        <a href={`mailto:${req.customer_email}`} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black py-2 rounded-lg text-center transition-all">REPLY BY MAIL</a>
+                                        {req.status === 'pending' && (
+                                            <button
+                                                onClick={() => handleStatusUpdate(req.id, 'accepted')}
+                                                className="flex-1 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white text-[10px] font-black py-2 rounded-lg transition-all"
+                                            >
+                                                ACCEPT
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )) : (
+                                <div className="text-center py-10 text-slate-500">
+                                    <Mail className="mx-auto mb-2 opacity-20" size={32} />
+                                    <p className="text-xs font-bold uppercase tracking-widest">No requests yet</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
