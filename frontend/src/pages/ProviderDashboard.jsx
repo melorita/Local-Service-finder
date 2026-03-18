@@ -9,10 +9,26 @@ const ProviderDashboard = ({ user }) => {
     const [editData, setEditData] = useState({});
     const [message, setMessage] = useState('');
     const [requests, setRequests] = useState([]);
+    const [locations, setLocations] = useState([]);
+
+    const SERVICES = [
+        'Plumber', 'Electrician', 'Carpenter', 'Painter',
+        'Appliance Repair', 'TV Satellite Installation',
+        'Cleaner', 'Pest Controller', 'Car Washer'
+    ];
 
     useEffect(() => {
         fetchProfile();
         fetchRequests();
+        const fetchLocations = async () => {
+            try {
+                const { data } = await axios.get('/api/auth/locations');
+                setLocations(data && data.length > 0 ? data : ['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
+            } catch (err) {
+                setLocations(['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
+            }
+        };
+        fetchLocations();
     }, []);
 
     const fetchProfile = async () => {
@@ -112,12 +128,22 @@ const ProviderDashboard = ({ user }) => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-2">
                                     <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Service Type</label>
-                                    <input
-                                        disabled={!isEditing}
-                                        value={editData.service_type}
-                                        onChange={(e) => setEditData({ ...editData, service_type: e.target.value })}
-                                        className={`input-field w-full ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
-                                    />
+                                    {isEditing ? (
+                                        <select
+                                            value={editData.service_type}
+                                            onChange={(e) => setEditData({ ...editData, service_type: e.target.value })}
+                                            className="input-field w-full bg-slate-900 border-white/10"
+                                        >
+                                            <option value="">Select service...</option>
+                                            {SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                    ) : (
+                                        <input
+                                            disabled
+                                            value={editData.service_type}
+                                            className="input-field w-full opacity-60 cursor-not-allowed"
+                                        />
+                                    )}
                                     {profile.pending_request && (
                                         <div className="flex items-center gap-2 mt-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 text-xs font-bold">
                                             <AlertCircle size={14} />
@@ -127,12 +153,22 @@ const ProviderDashboard = ({ user }) => {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Location</label>
-                                    <input
-                                        disabled={!isEditing}
-                                        value={editData.location}
-                                        onChange={(e) => setEditData({ ...editData, location: e.target.value })}
-                                        className={`input-field w-full ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
-                                    />
+                                    {isEditing ? (
+                                        <select
+                                            value={editData.location}
+                                            onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                                            className="input-field w-full bg-slate-900 border-white/10"
+                                        >
+                                            <option value="">Select location...</option>
+                                            {locations.map(l => <option key={l} value={l}>{l}</option>)}
+                                        </select>
+                                    ) : (
+                                        <input
+                                            disabled
+                                            value={editData.location}
+                                            className="input-field w-full opacity-60 cursor-not-allowed"
+                                        />
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Contact Phone</label>
@@ -140,6 +176,7 @@ const ProviderDashboard = ({ user }) => {
                                         disabled={!isEditing}
                                         value={editData.contact_number}
                                         onChange={(e) => setEditData({ ...editData, contact_number: e.target.value })}
+                                        placeholder="+251..."
                                         className={`input-field w-full ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                                     />
                                 </div>

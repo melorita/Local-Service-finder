@@ -140,14 +140,30 @@ const Register = () => {
                                     <label className="text-sm font-semibold text-slate-400 ml-1">Service Type</label>
                                     <div className="relative">
                                         <Wrench className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                                        <input name="service_type" className="input-field w-full pl-11" placeholder="e.g. Plumber" onChange={handleChange} required />
+                                        <select 
+                                            name="service_type" 
+                                            className="input-field w-full pl-11 bg-slate-900 border-white/10" 
+                                            onChange={handleChange} 
+                                            required
+                                        >
+                                            <option value="">Select service type...</option>
+                                            <option value="Plumber">Plumber</option>
+                                            <option value="Electrician">Electrician</option>
+                                            <option value="Carpenter">Carpenter</option>
+                                            <option value="Painter">Painter</option>
+                                            <option value="Appliance Repair">Appliance Repair (TV, fridge, washing machine)</option>
+                                            <option value="TV Satellite Installation">TV Satellite Installation Service</option>
+                                            <option value="Cleaner">Cleaner</option>
+                                            <option value="Pest Controller">Pest Controller</option>
+                                            <option value="Car Washer">Car Washer</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm font-semibold text-slate-400 ml-1">Contact Number</label>
                                     <div className="relative">
                                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                                        <input name="contact_number" className="input-field w-full pl-11" placeholder="+1..." onChange={handleChange} required />
+                                        <input name="contact_number" className="input-field w-full pl-11" placeholder="+251..." onChange={handleChange} required />
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2">
