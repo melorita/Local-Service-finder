@@ -12,16 +12,23 @@ async function fix() {
         // 1. Ensure Table Structure
         await db.query(`ALTER TABLE users MODIFY COLUMN role ENUM('customer', 'provider', 'admin', 'super_admin') DEFAULT 'customer'`);
 
-        // 2. Add location column if missing
-        const [regionCol] = await db.query("SHOW COLUMNS FROM users LIKE 'region'");
-        const [locationCol] = await db.query("SHOW COLUMNS FROM users LIKE 'location'");
-
-        if (regionCol.length > 0 && locationCol.length === 0) {
-            console.log('Renaming region column to location...');
+        // 2. Adjust columns for users and providers
+        const [userRegionCol] = await db.query("SHOW COLUMNS FROM users LIKE 'region'");
+        const [userLocationCol] = await db.query("SHOW COLUMNS FROM users LIKE 'location'");
+        if (userRegionCol.length > 0 && userLocationCol.length === 0) {
+            console.log('Renaming users.region to location...');
             await db.query("ALTER TABLE users CHANGE COLUMN region location VARCHAR(100)");
-        } else if (locationCol.length === 0) {
-            console.log('Adding location column...');
+        } else if (userLocationCol.length === 0) {
             await db.query("ALTER TABLE users ADD COLUMN location VARCHAR(100)");
+        }
+
+        const [providerRegionCol] = await db.query("SHOW COLUMNS FROM providers LIKE 'region'");
+        const [providerLocationCol] = await db.query("SHOW COLUMNS FROM providers LIKE 'location'");
+        if (providerRegionCol.length > 0 && providerLocationCol.length === 0) {
+            console.log('Renaming providers.region to location...');
+            await db.query("ALTER TABLE providers CHANGE COLUMN region location VARCHAR(255)");
+        } else if (providerLocationCol.length === 0) {
+            await db.query("ALTER TABLE providers ADD COLUMN location VARCHAR(255)");
         }
 
         // Rename regions table to locations if exists

@@ -7,9 +7,29 @@ const db = require('../db');
 // Get locations
 router.get('/locations', async (req, res) => {
     try {
-        const [locations] = await db.query('SELECT name FROM locations ORDER BY name ASC');
+        const expectedLocations = [
+            'Bole', 'Piassa', '4 Kilo', '5 Kilo', '6 Kilo', 'Ferensay', 
+            'Kazanchis', 'Mexico', 'Megenagna', 'CMC', 'Summit', 'Sarbet', 
+            'Gerji', 'Ayat', 'Lebu', 'Bole Bulbula', 'Tafo', 'Akaki Kality', 
+            'Tor Hailoch', 'Jemo'
+        ];
+
+        let [locations] = await db.query('SELECT name FROM locations ORDER BY name ASC');
+        
+        // If there are less than 20 locations, it means the DB is missing our full list
+        if (locations.length < 20) {
+            console.log("Auto-seeding locations to the database...");
+            await db.query('TRUNCATE TABLE locations'); // Clear out any old misspelled ones like 'Piazza'
+            for (const loc of expectedLocations) {
+                await db.query('INSERT INTO locations (name) VALUES (?)', [loc]);
+            }
+            // Fetch again updated
+            [locations] = await db.query('SELECT name FROM locations ORDER BY name ASC');
+        }
+
         res.json(locations.map(r => r.name));
     } catch (err) {
+        console.error('Error fetching/seeding locations:', err);
         res.status(500).json({ error: err.message });
     }
 });
