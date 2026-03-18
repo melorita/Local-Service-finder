@@ -14,7 +14,7 @@ const AdminDashboard = ({ user, onProviderApproved }) => {
     const [filterRole, setFilterRole] = useState('');
     const [locations, setLocations] = useState([]);
 
-    const COMMON_LOCATIONS = ['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo'];
+    const COMMON_LOCATIONS = ['Bole', 'Piassa', '4 Kilo', '5 Kilo', '6 Kilo', 'Ferensay', 'Kazanchis', 'Mexico', 'Megenagna', 'CMC', 'Summit', 'Sarbet', 'Gerji', 'Ayat', 'Lebu', 'Bole Bulbula', 'Tafo', 'Akaki Kality', 'Tor Hailoch', 'Jemo'];
 
     useEffect(() => {
         const fetchLocations = async () => {

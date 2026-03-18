@@ -26,12 +26,12 @@ const Register = () => {
                 if (data && data.length > 0) {
                     setLocations(data);
                 } else {
-                    setLocations(['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
+                    setLocations(['Bole', 'Piassa', '4 Kilo', '5 Kilo', '6 Kilo', 'Ferensay', 'Kazanchis', 'Mexico', 'Megenagna', 'CMC', 'Summit', 'Sarbet', 'Gerji', 'Ayat', 'Lebu', 'Bole Bulbula', 'Tafo', 'Akaki Kality', 'Tor Hailoch', 'Jemo']);
                 }
             } catch (err) {
                 console.error('Error fetching locations:', err);
                 // Fallback locations just in case
-                setLocations(['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
+                setLocations(['Bole', 'Piassa', '4 Kilo', '5 Kilo', '6 Kilo', 'Ferensay', 'Kazanchis', 'Mexico', 'Megenagna', 'CMC', 'Summit', 'Sarbet', 'Gerji', 'Ayat', 'Lebu', 'Bole Bulbula', 'Tafo', 'Akaki Kality', 'Tor Hailoch', 'Jemo']);
             }
         };
         fetchLocations();

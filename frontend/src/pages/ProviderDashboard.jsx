@@ -23,9 +23,9 @@ const ProviderDashboard = ({ user }) => {
         const fetchLocations = async () => {
             try {
                 const { data } = await axios.get('/api/auth/locations');
-                setLocations(data && data.length > 0 ? data : ['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
+                setLocations(data && data.length > 0 ? data : ['Bole', 'Piassa', '4 Kilo', '5 Kilo', '6 Kilo', 'Ferensay', 'Kazanchis', 'Mexico', 'Megenagna', 'CMC', 'Summit', 'Sarbet', 'Gerji', 'Ayat', 'Lebu', 'Bole Bulbula', 'Tafo', 'Akaki Kality', 'Tor Hailoch', 'Jemo']);
             } catch (err) {
-                setLocations(['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
+                setLocations(['Bole', 'Piassa', '4 Kilo', '5 Kilo', '6 Kilo', 'Ferensay', 'Kazanchis', 'Mexico', 'Megenagna', 'CMC', 'Summit', 'Sarbet', 'Gerji', 'Ayat', 'Lebu', 'Bole Bulbula', 'Tafo', 'Akaki Kality', 'Tor Hailoch', 'Jemo']);
             }
         };
         fetchLocations();
