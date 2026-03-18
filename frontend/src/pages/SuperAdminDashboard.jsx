@@ -9,36 +9,36 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('providers');
-    const [createAdminData, setCreateAdminData] = useState({ name: '', email: '', password: '', region: '' });
+    const [createAdminData, setCreateAdminData] = useState({ name: '', email: '', password: '', location: '' });
     const [submittingAdmin, setSubmittingAdmin] = useState(false);
     const [adminSuccessMsg, setAdminSuccessMsg] = useState('');
-    const [showCustomRegion, setShowCustomRegion] = useState(false);
-    const [filterRegion, setFilterRegion] = useState('');
+    const [showCustomLocation, setShowCustomLocation] = useState(false);
+    const [filterLocation, setFilterLocation] = useState('');
     const [filterRole, setFilterRole] = useState('');
-    const [regions, setRegions] = useState([]);
+    const [locations, setLocations] = useState([]);
 
-    const COMMON_REGIONS = ['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo'];
+    const COMMON_LOCATIONS = ['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo'];
 
     useEffect(() => {
-        const fetchRegions = async () => {
+        const fetchLocations = async () => {
             try {
-                const { data } = await axios.get('/api/auth/regions');
+                const { data } = await axios.get('/api/auth/locations');
                 if (data && data.length > 0) {
-                    setRegions(data);
+                    setLocations(data);
                 } else {
-                    setRegions(COMMON_REGIONS);
+                    setLocations(COMMON_LOCATIONS);
                 }
             } catch (err) {
                 console.error(err);
-                setRegions(COMMON_REGIONS);
+                setLocations(COMMON_LOCATIONS);
             }
         };
-        fetchRegions();
+        fetchLocations();
     }, []);
 
     useEffect(() => {
         fetchAllData();
-    }, [filterRegion, filterRole]);
+    }, [filterLocation, filterRole]);
 
     const fetchAllData = async () => {
         try {
@@ -49,9 +49,9 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
             };
 
             const [providersResp, usersResp, requestsResp] = await Promise.all([
-                axios.get(`/api/admin/providers?region=${filterRegion}`, config),
-                axios.get(`/api/admin/users?region=${filterRegion}&role=${filterRole}`, config),
-                axios.get(`/api/admin/service-change-requests?region=${filterRegion}`, config)
+                axios.get(`/api/admin/providers?location=${filterLocation}`, config),
+                axios.get(`/api/admin/users?location=${filterLocation}&role=${filterRole}`, config),
+                axios.get(`/api/admin/service-change-requests?location=${filterLocation}`, config)
             ]);
 
             setProviders(providersResp.data);
@@ -105,8 +105,8 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
             };
             await axios.post('/api/admin/create-admin', createAdminData, config);
             setAdminSuccessMsg('Admin account created successfully!');
-            setCreateAdminData({ name: '', email: '', password: '', region: '' });
-            setShowCustomRegion(false);
+            setCreateAdminData({ name: '', email: '', password: '', location: '' });
+            setShowCustomLocation(false);
             fetchAllData(); // Refresh users list
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create admin');
@@ -204,12 +204,12 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
                     <div className="p-4 border-b border-white/5 bg-white/[0.02] flex flex-wrap gap-4 items-center">
                         <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Filters:</span>
                         <select
-                            value={filterRegion}
-                            onChange={(e) => setFilterRegion(e.target.value)}
+                            value={filterLocation}
+                            onChange={(e) => setFilterLocation(e.target.value)}
                             className="bg-slate-900 border border-white/10 text-white rounded-lg px-3 py-1.5 text-sm outline-none w-40"
                         >
-                            <option value="">All Regions</option>
-                            {regions.map(r => <option key={r} value={r}>{r}</option>)}
+                            <option value="">All Locations</option>
+                            {locations.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
                         {activeTab === 'users' && (
                             <select
@@ -468,25 +468,25 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned Region</label>
-                                    {showCustomRegion ? (
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned Location</label>
+                                    {showCustomLocation ? (
                                         <div className="relative animate-in fade-in zoom-in-95 duration-200">
                                             <input
                                                 required
                                                 autoFocus
                                                 className="input-field w-full border-blue-500/50 pr-10 focus:ring-blue-500/50"
-                                                placeholder="Type new region name..."
-                                                value={createAdminData.region}
-                                                onChange={(e) => setCreateAdminData({ ...createAdminData, region: e.target.value })}
+                                                placeholder="Type new location name..."
+                                                value={createAdminData.location}
+                                                onChange={(e) => setCreateAdminData({ ...createAdminData, location: e.target.value })}
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    setShowCustomRegion(false);
-                                                    setCreateAdminData({ ...createAdminData, region: '' });
+                                                    setShowCustomLocation(false);
+                                                    setCreateAdminData({ ...createAdminData, location: '' });
                                                 }}
                                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 p-1 rounded-full transition-colors"
-                                                title="Cancel custom region"
+                                                title="Cancel custom location"
                                             >
                                                 <X size={14} />
                                             </button>
@@ -494,18 +494,18 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
                                     ) : (
                                         <select
                                             className="input-field w-full bg-slate-900 border-white/10 text-white"
-                                            value={createAdminData.region}
+                                            value={createAdminData.location}
                                             onChange={(e) => {
                                                 if (e.target.value === 'other') {
-                                                    setShowCustomRegion(true);
-                                                    setCreateAdminData({ ...createAdminData, region: '' });
+                                                    setShowCustomLocation(true);
+                                                    setCreateAdminData({ ...createAdminData, location: '' });
                                                 } else {
-                                                    setCreateAdminData({ ...createAdminData, region: e.target.value });
+                                                    setCreateAdminData({ ...createAdminData, location: e.target.value });
                                                 }
                                             }}
                                         >
-                                            <option value="">Select a region...</option>
-                                            {regions.map(reg => (
+                                            <option value="">Select a location...</option>
+                                            {locations.map(reg => (
                                                 <option key={reg} value={reg}>{reg}</option>
                                             ))}
                                             <option value="other">Other (Type manually...)</option>

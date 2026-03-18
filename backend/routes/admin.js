@@ -36,18 +36,18 @@ router.get('/providers', isAdmin, async (req, res) => {
         let params = [];
         let conditions = [];
 
-        // Regional Control
+        // Location Control
         if (req.user.role === 'admin') {
-            const [adminData] = await db.query('SELECT region FROM users WHERE id = ?', [req.user.id]);
-            if (adminData.length > 0 && adminData[0].region) {
+            const [adminData] = await db.query('SELECT location FROM users WHERE id = ?', [req.user.id]);
+            if (adminData.length > 0 && adminData[0].location) {
                 conditions.push('p.location LIKE ?');
-                params.push(`%${adminData[0].region}%`);
+                params.push(`%${adminData[0].location}%`);
             } else {
                 conditions.push('p.id = -1');
             }
-        } else if (req.user.role === 'super_admin' && req.query.region) {
+        } else if (req.user.role === 'super_admin' && req.query.location) {
             conditions.push('p.location LIKE ?');
-            params.push(`%${req.query.region}%`);
+            params.push(`%${req.query.location}%`);
         }
 
         if (conditions.length > 0) {
@@ -64,23 +64,23 @@ router.get('/providers', isAdmin, async (req, res) => {
 // Get all users
 router.get('/users', isAdmin, async (req, res) => {
     try {
-        let query = 'SELECT id, name, email, role, region, created_at FROM users';
+        let query = 'SELECT id, name, email, role, location, created_at FROM users';
         let params = [];
         let conditions = [];
 
         if (req.user.role === 'admin') {
-            const [adminData] = await db.query('SELECT region FROM users WHERE id = ?', [req.user.id]);
-            if (adminData.length > 0 && adminData[0].region) {
-                conditions.push('region = ?');
-                params.push(adminData[0].region);
+            const [adminData] = await db.query('SELECT location FROM users WHERE id = ?', [req.user.id]);
+            if (adminData.length > 0 && adminData[0].location) {
+                conditions.push('location = ?');
+                params.push(adminData[0].location);
                 conditions.push('role IN ("customer", "provider")');
             } else {
                 conditions.push('id = -1');
             }
         } else if (req.user.role === 'super_admin') {
-            if (req.query.region) {
-                conditions.push('region = ?');
-                params.push(req.query.region);
+            if (req.query.location) {
+                conditions.push('location = ?');
+                params.push(req.query.location);
             }
             if (req.query.role) {
                 conditions.push('role = ?');
@@ -103,17 +103,17 @@ router.get('/users', isAdmin, async (req, res) => {
 router.patch('/providers/:id/status', isAdmin, async (req, res) => {
     const { status } = req.body; // 'approved', 'blocked', 'pending'
     try {
-        // Regional Control
+        // Location Control
         if (req.user.role === 'admin') {
-            const [adminData] = await db.query('SELECT region FROM users WHERE id = ?', [req.user.id]);
+            const [adminData] = await db.query('SELECT location FROM users WHERE id = ?', [req.user.id]);
             const [providerData] = await db.query('SELECT location FROM providers WHERE id = ?', [req.params.id]);
 
             if (adminData.length > 0 && providerData.length > 0) {
-                const adminRegion = adminData[0].region;
+                const adminLocation = adminData[0].location;
                 const providerLocation = providerData[0].location;
 
-                if (adminRegion && !providerLocation.toLowerCase().includes(adminRegion.toLowerCase())) {
-                    return res.status(403).json({ message: 'Unauthorized: You can only manage providers in your region.' });
+                if (adminLocation && !providerLocation.toLowerCase().includes(adminLocation.toLowerCase())) {
+                    return res.status(403).json({ message: 'Unauthorized: You can only manage providers in your location.' });
                 }
             }
         }
@@ -171,18 +171,18 @@ router.get('/service-change-requests', isAdmin, async (req, res) => {
         `;
         let params = [];
 
-        // Regional Control
+        // Location Control
         if (req.user.role === 'admin') {
-            const [adminData] = await db.query('SELECT region FROM users WHERE id = ?', [req.user.id]);
-            if (adminData.length > 0 && adminData[0].region) {
+            const [adminData] = await db.query('SELECT location FROM users WHERE id = ?', [req.user.id]);
+            if (adminData.length > 0 && adminData[0].location) {
                 query += ' AND p.location LIKE ?';
-                params.push(`%${adminData[0].region}%`);
+                params.push(`%${adminData[0].location}%`);
             } else {
                 query += ' AND p.id = -1';
             }
-        } else if (req.user.role === 'super_admin' && req.query.region) {
+        } else if (req.user.role === 'super_admin' && req.query.location) {
             query += ' AND p.location LIKE ?';
-            params.push(`%${req.query.region}%`);
+            params.push(`%${req.query.location}%`);
         }
 
         const [requests] = await db.query(query, params);
@@ -210,13 +210,13 @@ router.patch('/service-change-requests/:id', isAdmin, async (req, res) => {
 
         const request = requests[0];
 
-        // Regional Control
+        // Location Control
         if (req.user.role === 'admin') {
-            const [adminData] = await db.query('SELECT region FROM users WHERE id = ?', [req.user.id]);
+            const [adminData] = await db.query('SELECT location FROM users WHERE id = ?', [req.user.id]);
             if (adminData.length > 0) {
-                const adminRegion = adminData[0].region;
-                if (adminRegion && !request.location.toLowerCase().includes(adminRegion.toLowerCase())) {
-                    return res.status(403).json({ message: 'Unauthorized: You can only manage requests in your region.' });
+                const adminLocation = adminData[0].location;
+                if (adminLocation && !request.location.toLowerCase().includes(adminLocation.toLowerCase())) {
+                    return res.status(403).json({ message: 'Unauthorized: You can only manage requests in your location.' });
                 }
             }
         }
@@ -240,7 +240,7 @@ router.patch('/service-change-requests/:id', isAdmin, async (req, res) => {
 
 // Create new admin (Super Admin only)
 router.post('/create-admin', isSuperAdmin, async (req, res) => {
-    const { name, email, password, region } = req.body;
+    const { name, email, password, location } = req.body;
 
     try {
         const [existing] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
@@ -248,11 +248,11 @@ router.post('/create-admin', isSuperAdmin, async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         await db.query(
-            'INSERT INTO users (name, email, password, role, region) VALUES (?, ?, ?, "admin", ?)',
-            [name, email, hashedPassword, region]
+            'INSERT INTO users (name, email, password, role, location) VALUES (?, ?, ?, "admin", ?)',
+            [name, email, hashedPassword, location]
         );
-        if (region) {
-            await db.query('INSERT IGNORE INTO regions (name) VALUES (?)', [region]);
+        if (location) {
+            await db.query('INSERT IGNORE INTO locations (name) VALUES (?)', [location]);
         }
 
         res.status(201).json({ message: 'Admin account created successfully' });

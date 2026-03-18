@@ -12,10 +12,27 @@ async function fix() {
         // 1. Ensure Table Structure
         await db.query(`ALTER TABLE users MODIFY COLUMN role ENUM('customer', 'provider', 'admin', 'super_admin') DEFAULT 'customer'`);
 
-        // 2. Add region column if missing
-        const [cols] = await db.query("SHOW COLUMNS FROM users LIKE 'region'");
-        if (cols.length === 0) {
-            await db.query("ALTER TABLE users ADD COLUMN region VARCHAR(100)");
+        // 2. Add location column if missing
+        const [regionCol] = await db.query("SHOW COLUMNS FROM users LIKE 'region'");
+        const [locationCol] = await db.query("SHOW COLUMNS FROM users LIKE 'location'");
+
+        if (regionCol.length > 0 && locationCol.length === 0) {
+            console.log('Renaming region column to location...');
+            await db.query("ALTER TABLE users CHANGE COLUMN region location VARCHAR(100)");
+        } else if (locationCol.length === 0) {
+            console.log('Adding location column...');
+            await db.query("ALTER TABLE users ADD COLUMN location VARCHAR(100)");
+        }
+
+        // Rename regions table to locations if exists
+        try {
+            const [tables] = await db.query("SHOW TABLES LIKE 'regions'");
+            if (tables.length > 0) {
+                console.log('Renaming regions table to locations...');
+                await db.query("RENAME TABLE regions TO locations");
+            }
+        } catch (e) {
+            console.log('Regions table handling:', e.message);
         }
 
         // 3. Reset/Create Admin

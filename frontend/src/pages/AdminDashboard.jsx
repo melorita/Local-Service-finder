@@ -10,32 +10,32 @@ const AdminDashboard = ({ user, onProviderApproved }) => {
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('providers');
 
-    const [filterRegion, setFilterRegion] = useState('');
+    const [filterLocation, setFilterLocation] = useState('');
     const [filterRole, setFilterRole] = useState('');
-    const [regions, setRegions] = useState([]);
+    const [locations, setLocations] = useState([]);
 
-    const COMMON_REGIONS = ['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo'];
+    const COMMON_LOCATIONS = ['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo'];
 
     useEffect(() => {
-        const fetchRegions = async () => {
+        const fetchLocations = async () => {
             try {
-                const { data } = await axios.get('/api/auth/regions');
+                const { data } = await axios.get('/api/auth/locations');
                 if (data && data.length > 0) {
-                    setRegions(data);
+                    setLocations(data);
                 } else {
-                    setRegions(COMMON_REGIONS);
+                    setLocations(COMMON_LOCATIONS);
                 }
             } catch (err) {
                 console.error(err);
-                setRegions(COMMON_REGIONS);
+                setLocations(COMMON_LOCATIONS);
             }
         };
-        fetchRegions();
+        fetchLocations();
     }, []);
 
     useEffect(() => {
         fetchAllData();
-    }, [filterRegion, filterRole]);
+    }, [filterLocation, filterRole]);
 
     const fetchAllData = async () => {
         try {
@@ -46,9 +46,9 @@ const AdminDashboard = ({ user, onProviderApproved }) => {
             };
 
             const [providersResp, usersResp, requestsResp] = await Promise.all([
-                axios.get(`/api/admin/providers?region=${filterRegion}`, config),
-                axios.get(`/api/admin/users?region=${filterRegion}&role=${filterRole}`, config),
-                axios.get(`/api/admin/service-change-requests?region=${filterRegion}`, config)
+                axios.get(`/api/admin/providers?location=${filterLocation}`, config),
+                axios.get(`/api/admin/users?location=${filterLocation}&role=${filterRole}`, config),
+                axios.get(`/api/admin/service-change-requests?location=${filterLocation}`, config)
             ]);
 
             setProviders(providersResp.data);

@@ -16,25 +16,25 @@ const Register = () => {
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [regions, setRegions] = useState([]);
+    const [locations, setLocations] = useState([]);
     const navigate = useNavigate();
 
     React.useEffect(() => {
-        const fetchRegions = async () => {
+        const fetchLocations = async () => {
             try {
-                const { data } = await axios.get('/api/auth/regions');
+                const { data } = await axios.get('/api/auth/locations');
                 if (data && data.length > 0) {
-                    setRegions(data);
+                    setLocations(data);
                 } else {
-                    setRegions(['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
+                    setLocations(['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
                 }
             } catch (err) {
-                console.error('Error fetching regions:', err);
-                // Fallback regions just in case
-                setRegions(['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
+                console.error('Error fetching locations:', err);
+                // Fallback locations just in case
+                setLocations(['Bole', 'Piazza', 'Kazanchis', 'Megenagna', 'Mexiko', 'Sarbet', '4 Kilo']);
             }
         };
-        fetchRegions();
+        fetchLocations();
     }, []);
 
     const handleChange = (e) => {
@@ -97,12 +97,12 @@ const Register = () => {
                                 </div>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <label className="text-sm font-semibold text-slate-400 ml-1">Region</label>
+                                <label className="text-sm font-semibold text-slate-400 ml-1">Location</label>
                                 <div className="relative">
                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                                    <select name="region" className="input-field w-full pl-11 bg-slate-900 border-white/10" onChange={handleChange} required>
-                                        <option value="">Select your region...</option>
-                                        {regions.map((r, i) => (
+                                    <select name="location" className="input-field w-full pl-11 bg-slate-900 border-white/10" onChange={handleChange} required>
+                                        <option value="">Select your location...</option>
+                                        {locations.map((r, i) => (
                                             <option key={i} value={r}>{r}</option>
                                         ))}
                                     </select>

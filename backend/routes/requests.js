@@ -46,7 +46,7 @@ router.get('/provider', authenticateToken, async (req, res) => {
         // First get the provider ID for this user
         const [providers] = await db.query('SELECT id FROM providers WHERE user_id = ?', [req.user.id]);
         if (providers.length === 0) return res.status(404).json({ message: 'Provider not found' });
-
+        
         const provider_id = providers[0].id;
 
         const [requests] = await db.query(
@@ -84,7 +84,7 @@ router.get('/customer', authenticateToken, async (req, res) => {
 // Update request status
 router.patch('/:id/status', authenticateToken, async (req, res) => {
     const { status } = req.body; // 'accepted', 'completed', 'cancelled', 'rejected'
-
+    
     try {
         // Ensure the requester is the provider of this request
         const [providers] = await db.query('SELECT id FROM providers WHERE user_id = ?', [req.user.id]);

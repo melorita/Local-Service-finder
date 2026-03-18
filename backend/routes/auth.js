@@ -4,11 +4,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 
-// Get regions
-router.get('/regions', async (req, res) => {
+// Get locations
+router.get('/locations', async (req, res) => {
     try {
-        const [regions] = await db.query('SELECT name FROM regions ORDER BY name ASC');
-        res.json(regions.map(r => r.name));
+        const [locations] = await db.query('SELECT name FROM locations ORDER BY name ASC');
+        res.json(locations.map(r => r.name));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -16,22 +16,23 @@ router.get('/regions', async (req, res) => {
 
 // Register
 router.post('/register', async (req, res) => {
-    const { name, email, password, role, region } = req.body;
+    const { name, email, password, role, location } = req.body;
     try {
         const [existing] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         if (existing.length > 0) return res.status(400).json({ message: 'User already exists' });
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const [result] = await db.query(
-            'INSERT INTO users (name, email, password, role, region) VALUES (?, ?, ?, ?, ?)',
-            [name, email, hashedPassword, role || 'customer', region || null]
+            'INSERT INTO users (name, email, password, role, location) VALUES (?, ?, ?, ?, ?)',
+            [name, email, hashedPassword, role || 'customer', location || null]
         );
 
         if (role === 'provider') {
-            const { service_type, location, contact_number, description } = req.body;
+            const { service_type, contact_number, description } = req.body;
+            // Note: For providers, the location in providers table is same as the one in users table (the area)
             await db.query(
                 'INSERT INTO providers (user_id, service_type, location, contact_number, description) VALUES (?, ?, ?, ?, ?)',
-                [result.insertId, service_type, location || region, contact_number, description]
+                [result.insertId, service_type, location, contact_number, description]
             );
         }
 

@@ -1,8 +1,8 @@
 CREATE DATABASE IF NOT EXISTS local_service_finder;
 USE local_service_finder;
 
--- Regions table
-CREATE TABLE IF NOT EXISTS regions (
+-- Locations table
+CREATE TABLE IF NOT EXISTS locations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL
 );
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role ENUM('customer', 'provider', 'admin', 'super_admin') DEFAULT 'customer',
-    region VARCHAR(100), -- Used for regional admins
+    location VARCHAR(100), -- Used for regional admins
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
