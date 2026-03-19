@@ -5,7 +5,6 @@ import { Check, X, Shield, Users, Clock, AlertTriangle, UserCircle } from 'lucid
 const SuperAdminDashboard = ({ user, onProviderApproved }) => {
     const [providers, setProviders] = useState([]);
     const [users, setUsers] = useState([]);
-    const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('providers');
@@ -48,48 +47,18 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
                 headers: { Authorization: `Bearer ${token}` }
             };
 
-            const [providersResp, usersResp, requestsResp] = await Promise.all([
+            const [providersResp, usersResp] = await Promise.all([
                 axios.get(`/api/admin/providers?location=${filterLocation}`, config),
-                axios.get(`/api/admin/users?location=${filterLocation}&role=${filterRole}`, config),
-                axios.get(`/api/admin/service-change-requests?location=${filterLocation}`, config)
+                axios.get(`/api/admin/users?location=${filterLocation}&role=${filterRole}`, config)
             ]);
 
             setProviders(providersResp.data);
             setUsers(usersResp.data);
-            setRequests(requestsResp.data);
             setLoading(false);
         } catch (err) {
             console.error(err);
             setError(err.response?.data?.error || err.message || 'Failed to fetch dashboard data');
             setLoading(false);
-        }
-    };
-
-    const handleStatusChange = async (id, status) => {
-        try {
-            const token = localStorage.getItem('token');
-            const config = {
-                headers: { Authorization: `Bearer ${token}` }
-            };
-            await axios.patch(`/api/admin/providers/${id}/status`, { status }, config);
-            fetchAllData();
-            if (onProviderApproved) onProviderApproved();
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    const handleRequestAction = async (requestId, status) => {
-        try {
-            const token = localStorage.getItem('token');
-            const config = {
-                headers: { Authorization: `Bearer ${token}` }
-            };
-            await axios.patch(`/api/admin/service-change-requests/${requestId}`, { status }, config);
-            fetchAllData();
-            if (onProviderApproved) onProviderApproved();
-        } catch (err) {
-            console.error(err);
         }
     };
 
@@ -141,12 +110,6 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
                         className={`px-6 py-2.5 rounded-lg text-sm font-black transition-all ${activeTab === 'users' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-white'}`}
                     >
                         ALL USERS
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('requests')}
-                        className={`px-6 py-2.5 rounded-lg text-sm font-black transition-all ${activeTab === 'requests' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-white'}`}
-                    >
-                        REQUESTS {requests.length > 0 && <span className="ml-2 bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full">{requests.length}</span>}
                     </button>
                     <button
                         onClick={() => setActiveTab('admins')}
@@ -232,17 +195,17 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
                             <thead>
                                 <tr className="bg-white/[0.02] border-b border-white/5 uppercase tracking-[0.2em] text-[10px] text-slate-500 font-black">
                                     <th className="px-6 py-5">Provider details</th>
+                                    <th className="px-6 py-5">Location</th>
                                     <th className="px-6 py-5">Service specialty</th>
                                     <th className="px-6 py-5 text-center">Status</th>
-                                    <th className="px-6 py-5 text-right">Verification Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {providers.length > 0 ? providers.map(p => (
                                     <tr key={p.id} className="hover:bg-white/[0.01] transition-colors group">
-                                        <td className="px-6 py-6">
+                                        <td className="px-6 py-3">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500/20 to-violet-500/20 flex items-center justify-center font-black text-blue-400 border border-white/10">
+                                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500/20 to-violet-500/20 flex items-center justify-center font-black text-blue-400 border border-white/10">
                                                     {p.name.charAt(0)}
                                                 </div>
                                                 <div>
@@ -251,12 +214,15 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-6">
+                                        <td className="px-6 py-3 font-medium text-slate-300">
+                                            {p.location || 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-3">
                                             <span className="px-3 py-1 bg-white/5 rounded-lg text-xs font-black text-slate-300 border border-white/10 uppercase tracking-widest">
                                                 {p.service_type}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-6 text-center">
+                                        <td className="px-6 py-3 text-center">
                                             <span className={`
                                                 inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest
                                                 ${p.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
@@ -265,46 +231,6 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
                                             `}>
                                                 {p.status}
                                             </span>
-                                        </td>
-                                        <td className="px-6 py-6">
-                                            <div className="flex justify-end gap-3">
-                                                {p.status === 'pending' && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleStatusChange(p.id, 'approved')}
-                                                            className="px-4 py-2 flex items-center gap-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 text-xs font-black uppercase tracking-widest"
-                                                            title="Accept this provider"
-                                                        >
-                                                            <Check size={14} /> Approve
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleStatusChange(p.id, 'blocked')}
-                                                            className="px-4 py-2 flex items-center gap-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all border border-red-500/20 text-xs font-black uppercase tracking-widest"
-                                                            title="Reject this provider"
-                                                        >
-                                                            <X size={14} /> Decline
-                                                        </button>
-                                                    </>
-                                                )}
-                                                {p.status === 'approved' && (
-                                                    <button
-                                                        onClick={() => handleStatusChange(p.id, 'blocked')}
-                                                        className="px-4 py-2 flex items-center gap-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all border border-red-500/20 text-xs font-black uppercase tracking-widest"
-                                                        title="Suspend this provider"
-                                                    >
-                                                        <X size={14} /> Block
-                                                    </button>
-                                                )}
-                                                {p.status === 'blocked' && (
-                                                    <button
-                                                        onClick={() => handleStatusChange(p.id, 'approved')}
-                                                        className="px-4 py-2 flex items-center gap-2 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20 text-xs font-black uppercase tracking-widest"
-                                                        title="Re-approve this provider"
-                                                    >
-                                                        <Check size={14} /> Restore
-                                                    </button>
-                                                )}
-                                            </div>
                                         </td>
                                     </tr>
                                 )) : (
@@ -334,10 +260,10 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
                             <tbody className="divide-y divide-white/5">
                                 {users.map(u => (
                                     <tr key={u.id} className="hover:bg-white/[0.01] transition-colors group">
-                                        <td className="px-6 py-6">
+                                        <td className="px-6 py-3">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-11 h-11 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-white/10">
-                                                    <UserCircle size={24} />
+                                                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-white/10">
+                                                    <UserCircle size={20} />
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-white uppercase tracking-tight">{u.name}</div>
@@ -345,7 +271,7 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-6">
+                                        <td className="px-6 py-3">
                                             <span className={`
                                                 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border
                                                 ${u.role === 'admin' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' :
@@ -355,73 +281,18 @@ const SuperAdminDashboard = ({ user, onProviderApproved }) => {
                                                 {u.role}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-6 text-slate-400 text-sm font-medium">
+                                        <td className="px-6 py-3 text-slate-400 text-sm font-medium">
                                             {new Date(u.created_at).toLocaleDateString('en-US', {
                                                 year: 'numeric',
                                                 month: 'long',
                                                 day: 'numeric'
                                             })}
                                         </td>
-                                        <td className="px-6 py-6 text-right text-xs font-mono text-slate-600">
+                                        <td className="px-6 py-3 text-right text-xs font-mono text-slate-600">
                                             ID_{u.id.toString().padStart(4, '0')}
                                         </td>
                                     </tr>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : activeTab === 'requests' ? (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="bg-white/[0.02] border-b border-white/5 uppercase tracking-[0.2em] text-[10px] text-slate-500 font-black">
-                                    <th className="px-6 py-5">Provider Name</th>
-                                    <th className="px-6 py-5">Current → Requested</th>
-                                    <th className="px-6 py-5">Date Requested</th>
-                                    <th className="px-6 py-5 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {requests.length > 0 ? requests.map(r => (
-                                    <tr key={r.id} className="hover:bg-white/[0.01] transition-colors group">
-                                        <td className="px-6 py-6 font-bold text-white uppercase tracking-tight">
-                                            {r.provider_name}
-                                        </td>
-                                        <td className="px-6 py-6 italic text-slate-400 text-sm">
-                                            <span className="text-slate-500 line-through">{r.old_service}</span>
-                                            <span className="mx-2 text-blue-400 font-black">→</span>
-                                            <span className="text-emerald-400 font-black">{r.requested_service}</span>
-                                        </td>
-                                        <td className="px-6 py-6 text-slate-400 text-sm font-medium">
-                                            {new Date(r.created_at).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-6 py-6">
-                                            <div className="flex justify-end gap-3">
-                                                <button
-                                                    onClick={() => handleRequestAction(r.id, 'APPROVED')}
-                                                    className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
-                                                >
-                                                    Approve
-                                                </button>
-                                                <button
-                                                    onClick={() => handleRequestAction(r.id, 'REJECTED')}
-                                                    className="px-4 py-2 bg-red-500/10 text-red-500 rounded-xl text-xs font-black uppercase tracking-widest border border-red-500/20 hover:bg-red-500 hover:text-white transition-all"
-                                                >
-                                                    Reject
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )) : (
-                                    <tr>
-                                        <td colSpan="4" className="px-6 py-24 text-center">
-                                            <div className="flex flex-col items-center gap-4 opacity-30">
-                                                <Clock size={64} className="text-slate-500" />
-                                                <p className="font-black text-2xl uppercase tracking-[0.2em] text-slate-500">No pending requests</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )}
                             </tbody>
                         </table>
                     </div>

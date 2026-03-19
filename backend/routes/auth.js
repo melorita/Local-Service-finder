@@ -8,14 +8,14 @@ const db = require('../db');
 router.get('/locations', async (req, res) => {
     try {
         const expectedLocations = [
-            'Bole', 'Piassa', '4 Kilo', '5 Kilo', '6 Kilo', 'Ferensay', 
-            'Kazanchis', 'Mexico', 'Megenagna', 'CMC', 'Summit', 'Sarbet', 
-            'Gerji', 'Ayat', 'Lebu', 'Bole Bulbula', 'Tafo', 'Akaki Kality', 
+            'Bole', 'Piassa', '4 Kilo', '5 Kilo', '6 Kilo', 'Ferensay',
+            'Kazanchis', 'Mexico', 'Megenagna', 'CMC', 'Summit', 'Sarbet',
+            'Gerji', 'Ayat', 'Lebu', 'Bole Bulbula', 'Tafo', 'Akaki Kality',
             'Tor Hailoch', 'Jemo'
         ];
 
         let [locations] = await db.query('SELECT name FROM locations ORDER BY name ASC');
-        
+
         // If there are less than 20 locations, it means the DB is missing our full list
         if (locations.length < 20) {
             console.log("Auto-seeding locations to the database...");
