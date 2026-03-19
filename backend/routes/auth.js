@@ -37,6 +37,14 @@ router.get('/locations', async (req, res) => {
 // Register
 router.post('/register', async (req, res) => {
     const { name, email, password, role, location } = req.body;
+    
+    if (role !== 'super_admin') {
+        const emailRegex = /^[^\s@]+@gmail\.com$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: 'Invalid email' });
+        }
+    }
+
     try {
         const [existing] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         if (existing.length > 0) return res.status(400).json({ message: 'User already exists' });
@@ -49,6 +57,13 @@ router.post('/register', async (req, res) => {
 
         if (role === 'provider') {
             const { service_type, contact_number, description } = req.body;
+            
+            let phone = contact_number || '';
+            phone = phone.replace(/[\s-]/g, '');
+            if (!/^(?:\+251|0)[79]\d{8}$/.test(phone)) {
+                return res.status(400).json({ message: 'Invalid phone number format' });
+            }
+
             // Note: For providers, the location in providers table is same as the one in users table (the area)
             await db.query(
                 'INSERT INTO providers (user_id, service_type, location, contact_number, description) VALUES (?, ?, ?, ?, ?)',
@@ -117,6 +132,12 @@ const authenticateToken = (req, res, next) => {
 
 router.put('/profile', authenticateToken, async (req, res) => {
     const { name, email } = req.body;
+
+    const emailRegex = /^[^\s@]+@gmail\.com$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'Invalid email' });
+    }
+
     try {
         await db.query('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, req.user.id]);
         res.json({ message: 'Profile updated successfully' });

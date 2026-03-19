@@ -45,6 +45,24 @@ const Register = () => {
         e.preventDefault();
         setLoading(true);
         setError('');
+
+        const emailRegex = /^[^\s@]+@gmail\.com$/;
+        if (!emailRegex.test(formData.email)) {
+            setError('Invalid email');
+            setLoading(false);
+            return;
+        }
+
+        if (formData.role === 'provider') {
+            let phone = formData.contact_number || '';
+            phone = phone.replace(/[\s-]/g, '');
+            if (!/^(?:\+251|0)[79]\d{8}$/.test(phone)) {
+                setError('Invalid phone number format');
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
             await axios.post('/api/auth/register', formData);
             navigate('/login');
@@ -83,7 +101,7 @@ const Register = () => {
                                 <label className="text-sm font-semibold text-slate-400 ml-1">Email</label>
                                 <div className="relative">
                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                                    <input name="email" type="email" className="input-field w-full pl-11" placeholder="john@example.com" onChange={handleChange} required />
+                                    <input name="email" type="text" className="input-field w-full pl-11" placeholder="john@gmail.com" onChange={handleChange} required />
                                 </div>
                             </div>
                         </div>

@@ -128,6 +128,12 @@ router.patch('/providers/:id/status', isAdmin, async (req, res) => {
 // Update admin profile
 router.put('/profile', isAdmin, async (req, res) => {
     const { name, email } = req.body;
+
+    const emailRegex = /^[^\s@]+@gmail\.com$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'Invalid email' });
+    }
+
     try {
         await db.query('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, req.user.id]);
         res.json({ message: 'Profile updated successfully' });
@@ -241,6 +247,11 @@ router.patch('/service-change-requests/:id', isAdmin, async (req, res) => {
 // Create new admin (Super Admin only)
 router.post('/create-admin', isSuperAdmin, async (req, res) => {
     const { name, email, password, location } = req.body;
+
+    const emailRegex = /^[^\s@]+@gmail\.com$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'Invalid email' });
+    }
 
     try {
         const [existing] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
